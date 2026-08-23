@@ -1,1 +1,78 @@
 @import "tailwindcss";
+
+@theme {
+  --color-paper: #fafaf9;
+  --color-paper-raised: #ffffff;
+
+  --color-signal-50: #eef1f6;
+  --color-signal-100: #dbe1ec;
+  --color-signal-300: #93a3c2;
+  --color-signal-500: #3d4f74;
+  --color-signal-600: #313f5e;
+  --color-signal-700: #26314a;
+
+  --font-display: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-rise: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: #0a0a0a;
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal-500);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-signal-100);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* thin, evenly-lit scrollbar for the chat column */
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: #d4d4d4 transparent;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background-color: #d4d4d4;
+    border-radius: 999px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
