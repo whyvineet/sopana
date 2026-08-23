@@ -27,7 +27,7 @@ export default function ProfileOverview({ profile }) {
           <div>
             <p className="text-xs font-medium tracking-[0.25em] text-gray-400">INTERESTS</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {profile.interests.map((interest) => (
+              {profile.interests?.map((interest) => (
                 <Badge key={interest} tone="neutral">
                   {interest}
                 </Badge>
@@ -40,7 +40,7 @@ export default function ProfileOverview({ profile }) {
               LEARNING GOALS
             </p>
             <ul className="mt-4 space-y-2">
-              {profile.goals.map((goal) => (
+              {profile.goals?.map((goal) => (
                 <li key={goal} className="flex items-start gap-2.5 text-sm text-gray-700">
                   <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
                   {goal}

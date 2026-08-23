@@ -45,11 +45,11 @@ export default function SkillGap({ skillGap }) {
   if (!skillGap) return null
 
   const byStatus = (status) =>
-    skillGap.items.filter((item) =>
+    skillGap.items?.filter((item) =>
       status === 'attention'
         ? item.status === 'attention' || item.status === 'unexplored'
         : item.status === status
-    )
+    ) || []
 
   return (
     <div>
@@ -58,7 +58,7 @@ export default function SkillGap({ skillGap }) {
       </p>
 
       <div className="mt-6 space-y-8">
-        {skillGap.items.map((item) => (
+        {skillGap.items?.map((item) => (
           <SkillBar key={item.label} {...item} />
         ))}
       </div>
