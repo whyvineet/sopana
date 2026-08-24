@@ -6,7 +6,7 @@ import { useConversation } from '@/hooks/useConversation'
 
 export default function Conversation() {
   const { sessionId, messages, stage } = useAppState()
-  const { send, isLoading, error, clearError } = useConversation()
+  const { send, retryLast, isLoading, error, clearError } = useConversation()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -29,8 +29,7 @@ export default function Conversation() {
       onSend={handleSend}
       onRetry={() => {
         clearError()
-        // Retry re-sends the same last user turn is not always well-defined,
-        // so we simply clear the error and let the learner try again.
+        retryLast()
       }}
     />
   )

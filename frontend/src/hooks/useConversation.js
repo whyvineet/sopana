@@ -8,11 +8,13 @@ export function useConversation() {
   const state = useAppState()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [failedPayload, setFailedPayload] = useState(null)
   const navigate = useNavigate()
 
   const start = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+    setFailedPayload(null)
     try {
       const res = await api.startConversation()
       dispatch({
@@ -37,13 +39,9 @@ export function useConversation() {
     async ({ text, optionIds, displayText }) => {
       setIsLoading(true)
       setError(null)
+      setFailedPayload(null)
 
       const answer = { text: text ?? null, optionIds: optionIds ?? null }
-
-      dispatch({
-        type: 'ADD_USER_MESSAGE',
-        payload: { text: displayText, answer },
-      })
 
       try {
         const res = await api.sendMessage({
@@ -52,19 +50,37 @@ export function useConversation() {
           optionIds,
         })
 
+        dispatch({
+          type: 'ADD_USER_MESSAGE',
+          payload: { text: displayText, answer },
+        })
+
         dispatch({ type: 'ADD_AI_RESPONSE', payload: res })
 
         if (res.done) {
           navigate('/profile')
         }
       } catch (err) {
+        setFailedPayload({ text, optionIds, displayText })
         setError(err instanceof ApiError ? err.message : 'Something went wrong.')
       } finally {
         setIsLoading(false)
       }
     },
-    [dispatch, navigate, state.sessionId, state.answers, state.stage]
+    [dispatch, navigate, state.sessionId]
   )
 
-  return { start, send, isLoading, error, clearError: () => setError(null) }
+  const retryLast = useCallback(async () => {
+    if (!failedPayload || isLoading) return
+    await send(failedPayload)
+  }, [failedPayload, isLoading, send])
+
+  return {
+    start,
+    send,
+    retryLast,
+    isLoading,
+    error,
+    clearError: () => setError(null),
+  }
 }

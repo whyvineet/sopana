@@ -9,7 +9,7 @@ import ErrorPanel from '@/components/shared/ErrorPanel'
 export default function ChatWindow({ messages, stage, isLoading, error, onSend, onRetry }) {
   const scrollRef = useRef(null)
   const lastMessage = messages[messages.length - 1]
-  const awaitingInput = !isLoading && lastMessage?.role === 'ai' && !error
+  const awaitingInput = !isLoading && lastMessage?.role === 'ai'
   const allowCustomInput = lastMessage?.allowCustomInput !== false
 
   useEffect(() => {
