@@ -130,6 +130,33 @@ function normalizeLearningPath(raw) {
   }
 }
 
+function normalizeSkill(rawSkill) {
+  if (!rawSkill || typeof rawSkill !== 'object') return null
+
+  const label = rawSkill.label ?? rawSkill.name ?? rawSkill.skill_name ?? ''
+  if (!label) return null
+
+  return {
+    label,
+    level: rawSkill.level ?? 'unknown',
+  }
+}
+
+function normalizeProfile(raw) {
+  if (!raw || typeof raw !== 'object') return null
+
+  return {
+    ...raw,
+    target: raw.target ?? raw.target_role ?? '',
+    strengths: (raw.strengths ?? raw.skills ?? []).map(normalizeSkill).filter(Boolean),
+    goals: raw.goals ?? raw.learning_objectives ?? [],
+    interests: raw.interests ?? [],
+    experienceLevel: raw.experienceLevel ?? raw.experience_level ?? null,
+    goalSummary: raw.goalSummary ?? raw.goal_summary ?? null,
+    learningObjectives: raw.learningObjectives ?? raw.learning_objectives ?? [],
+  }
+}
+
 /**
  * Normalizes a backend conversation payload (snake_case, as documented in
  * the API contract) into the single camelCase shape the rest of the app
@@ -159,7 +186,7 @@ function normalizeConversationResponse(raw) {
     allowCustomInput: Boolean(raw.allow_custom_input ?? raw.allowCustomInput ?? true),
     stage,
     done: Boolean(raw.done ?? raw.complete ?? raw.onboarding_complete ?? false),
-    profile: raw.profile ?? null,
+    profile: normalizeProfile(raw.profile),
     missingInformation: raw.missing_information ?? raw.missingInformation ?? [],
     skillGap: raw.skill_gap ?? raw.skillGap ?? null,
     learningPath: normalizeLearningPath(raw.learning_path ?? raw.learningPath),
