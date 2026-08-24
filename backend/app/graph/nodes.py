@@ -42,14 +42,17 @@ EXPERIENCE_ALIASES = {
     "coursework": "casual",
     "tutorials": "casual",
     "beginner_projects": "project",
+    "beginner__projects": "project",
     "workshop": "workshop",
     "workshops": "workshop",
     "project": "project",
     "projects": "project",
     "academic_projects": "project",
+    "academic__projects": "project",
     "built_a_few_projects": "project",
     "professional": "professional",
     "professional_experience": "professional",
+    "professional__experience": "professional",
 }
 
 
@@ -90,7 +93,7 @@ def _role(state: LearningState):
 
 def _normalize_experience(value: str) -> str | None:
     key = value.strip().lower().replace("-", "_").replace(" ", "_").replace("/", "_")
-    key = "__".join(part for part in key.split("_") if part)
+    key = "_".join(part for part in key.split("_") if part)
     if key in EXPERIENCE_ALIASES:
         return EXPERIENCE_ALIASES[key]
     for alias, mapped in EXPERIENCE_ALIASES.items():
