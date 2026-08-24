@@ -273,8 +273,10 @@ def _apply_option_text(state: LearningState, text: str) -> dict[str, Any]:
             "no",
             "nope",
         }:
-            updates["selected_skill_ids"] = [item["skill_id"] for item in skill_payload]
+            updates["selected_skill_ids"] = ["skill.none_yet"]
             updates["skills"] = skill_payload
+            updates["pending_proficiency_skill_ids"] = []
+            updates["current_proficiency_skill_id"] = None
         else:
             for option in matched:
                 if option.id == "skill.none_yet":
