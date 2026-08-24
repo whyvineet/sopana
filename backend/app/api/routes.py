@@ -66,3 +66,14 @@ def get_skill_gap(session_id: str) -> dict:
     if gap is None:
         raise HTTPException(status_code=404, detail="Skill gap not computed yet for this session.")
     return gap
+
+
+@router.get("/dashboard/{session_id}")
+def get_dashboard(session_id: str) -> dict:
+    try:
+        dashboard = conversation_service.get_dashboard(session_id)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Unknown session_id.") from exc
+    if dashboard is None:
+        raise HTTPException(status_code=404, detail="Dashboard not available yet for this session.")
+    return dashboard

@@ -44,6 +44,50 @@ def _from_storage(raw: dict[str, Any]) -> LearningState:
     return LearningState(**raw)
 
 
+def _build_dashboard(state: LearningState) -> dict[str, Any] | None:
+    learning_path = state.get("learning_path") or {}
+    if not learning_path:
+        return None
+
+    steps = learning_path.get("steps") or []
+    current_focus_step_id = learning_path.get("current_focus_step_id")
+    current_index = 0
+    for index, step in enumerate(steps):
+        if step.get("id") == current_focus_step_id:
+            current_index = index
+            break
+
+    current_step = steps[current_index] if steps else None
+    next_step = steps[current_index + 1] if current_index + 1 < len(steps) else None
+
+    strong_skills = [
+        item.get("skill_name")
+        for item in (state.get("skill_gap") or {}).get("strong", [])
+        if isinstance(item, dict) and item.get("skill_name")
+    ]
+    if not strong_skills:
+        strong_skills = [
+            item.get("name")
+            for item in state.get("skills", [])
+            if isinstance(item, dict) and item.get("name")
+        ]
+
+    upcoming_titles = [
+        step.get("title")
+        for step in steps[current_index + 1 :]
+        if isinstance(step, dict) and step.get("title")
+    ][:4]
+
+    return {
+        "target": state.get("target_role") or learning_path.get("role_name") or "Your role",
+        "percent_complete": int(round(float(learning_path.get("overall_progress") or 0) * 100)),
+        "current_focus": current_step.get("title") if isinstance(current_step, dict) else "Start your first step",
+        "next_action": next_step.get("title") if isinstance(next_step, dict) else "Continue current focus",
+        "skills_developed": strong_skills,
+        "upcoming_steps": upcoming_titles,
+    }
+
+
 def _public_snapshot(state: LearningState) -> dict[str, Any]:
     complete = state.get("current_stage") == "complete" and bool(state.get("learning_path"))
     return {
@@ -71,6 +115,7 @@ def _public_snapshot(state: LearningState) -> dict[str, Any]:
         "onboarding_complete": complete,
         "skill_gap": state.get("skill_gap"),
         "learning_path": state.get("learning_path"),
+        "dashboard": _build_dashboard(state),
         "error": state.get("error"),
     }
 
@@ -133,3 +178,11 @@ def get_skill_gap(session_id: str) -> dict[str, Any] | None:
     if stored is None:
         raise SessionNotFoundError(session_id)
     return stored.get("skill_gap")
+
+
+def get_dashboard(session_id: str) -> dict[str, Any] | None:
+    stored = get_session_store().get(session_id)
+    if stored is None:
+        raise SessionNotFoundError(session_id)
+    state = _from_storage(stored)
+    return _build_dashboard(state)

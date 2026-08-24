@@ -105,6 +105,11 @@ export async function getLearningPath(sessionId) {
   return normalizeLearningPath(raw)
 }
 
+export async function getDashboard(sessionId) {
+  const raw = await request(`/api/v1/dashboard/${sessionId}`)
+  return normalizeDashboard(raw)
+}
+
 function normalizeLearningPath(raw) {
   if (!raw || typeof raw !== 'object') return null
 
@@ -157,6 +162,20 @@ function normalizeProfile(raw) {
   }
 }
 
+function normalizeDashboard(raw) {
+  if (!raw || typeof raw !== 'object') return null
+
+  return {
+    ...raw,
+    target: raw.target ?? raw.role_name ?? '',
+    percentComplete: raw.percentComplete ?? raw.percent_complete ?? 0,
+    currentFocus: raw.currentFocus ?? raw.current_focus ?? 'Start your first step',
+    nextAction: raw.nextAction ?? raw.next_action ?? 'Continue current focus',
+    skillsDeveloped: raw.skillsDeveloped ?? raw.skills_developed ?? [],
+    upcoming: raw.upcoming ?? raw.upcoming_steps ?? [],
+  }
+}
+
 /**
  * Normalizes a backend conversation payload (snake_case, as documented in
  * the API contract) into the single camelCase shape the rest of the app
@@ -190,7 +209,7 @@ function normalizeConversationResponse(raw) {
     missingInformation: raw.missing_information ?? raw.missingInformation ?? [],
     skillGap: raw.skill_gap ?? raw.skillGap ?? null,
     learningPath: normalizeLearningPath(raw.learning_path ?? raw.learningPath),
-    dashboard: raw.dashboard ?? null,
+    dashboard: normalizeDashboard(raw.dashboard),
   }
 }
 
