@@ -68,6 +68,26 @@ def get_skill_gap(session_id: str) -> dict:
     return gap
 
 
+@router.post("/learning-path/{session_id}/steps/{step_id}/start")
+def start_learning_step(session_id: str, step_id: str) -> dict:
+    try:
+        return conversation_service.start_learning_step(session_id, step_id)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Unknown session_id.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/learning-path/{session_id}/steps/{step_id}/complete")
+def complete_learning_step(session_id: str, step_id: str) -> dict:
+    try:
+        return conversation_service.complete_learning_step(session_id, step_id)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Unknown session_id.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("/dashboard/{session_id}")
 def get_dashboard(session_id: str) -> dict:
     try:

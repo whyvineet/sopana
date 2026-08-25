@@ -160,8 +160,13 @@ def generate_learning_path(
                 )
             )
 
-    total_required = len(gap.strong) + len(gap.developing) + len(gap.missing)
-    overall_progress = round(len(gap.strong) / total_required, 2) if total_required else 0.0
+    total_steps = len(steps)
+    completed_steps = len([step for step in steps if step.completed])
+    overall_progress = round(completed_steps / total_steps, 2) if total_steps else 0.0
+
+    if steps:
+        steps[0].status = "current"
+        steps[0].completed = False
 
     return LearningPath(
         role_id=gap.role_id,

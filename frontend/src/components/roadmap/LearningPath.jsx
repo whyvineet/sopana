@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import PathNode from './PathNode'
 
-export default function LearningPath({ learningPath }) {
+export default function LearningPath({ learningPath, onStartStep, onCompleteStep, stepActionLoadingId }) {
   const [expandedId, setExpandedId] = useState(
     learningPath?.nodes?.find((n) => n.status === 'current')?.id ?? null
   )
@@ -23,6 +23,9 @@ export default function LearningPath({ learningPath }) {
             isLast={i === (learningPath.nodes?.length ?? 0) - 1}
             isExpanded={expandedId === node.id}
             onToggle={() => setExpandedId((prev) => (prev === node.id ? null : node.id))}
+            onStartStep={onStartStep}
+            onCompleteStep={onCompleteStep}
+            isActionLoading={stepActionLoadingId === node.id}
           />
         ))}
       </ol>

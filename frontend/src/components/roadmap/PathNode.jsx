@@ -6,7 +6,16 @@ const MARKER = {
   upcoming: { className: 'border-gray-300 bg-white text-gray-300', glyph: '○' },
 }
 
-export default function PathNode({ node, index, isLast, isExpanded, onToggle }) {
+export default function PathNode({
+  node,
+  index,
+  isLast,
+  isExpanded,
+  onToggle,
+  onStartStep,
+  onCompleteStep,
+  isActionLoading,
+}) {
   const marker = MARKER[node.status]
   // A gentle alternating step-in, evoking a staircase without breaking
   // the reading rhythm — collapses to a flat column on narrow screens.
@@ -50,7 +59,14 @@ export default function PathNode({ node, index, isLast, isExpanded, onToggle }) 
             </span>
           </button>
 
-          {isExpanded && <ResourcePanel node={node} />}
+          {isExpanded && (
+            <ResourcePanel
+              node={node}
+              onStart={() => onStartStep?.(node.id)}
+              onComplete={() => onCompleteStep?.(node.id)}
+              isActionLoading={isActionLoading}
+            />
+          )}
         </div>
       </div>
     </li>

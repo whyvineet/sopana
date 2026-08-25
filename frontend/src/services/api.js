@@ -110,6 +110,26 @@ export async function getDashboard(sessionId) {
   return normalizeDashboard(raw)
 }
 
+export async function startLearningStep(sessionId, stepId) {
+  const raw = await request(`/api/v1/learning-path/${sessionId}/steps/${stepId}/start`, {
+    method: 'POST',
+  })
+  return {
+    learningPath: normalizeLearningPath(raw.learning_path),
+    dashboard: normalizeDashboard(raw.dashboard),
+  }
+}
+
+export async function completeLearningStep(sessionId, stepId) {
+  const raw = await request(`/api/v1/learning-path/${sessionId}/steps/${stepId}/complete`, {
+    method: 'POST',
+  })
+  return {
+    learningPath: normalizeLearningPath(raw.learning_path),
+    dashboard: normalizeDashboard(raw.dashboard),
+  }
+}
+
 function normalizeLearningPath(raw) {
   if (!raw || typeof raw !== 'object') return null
 

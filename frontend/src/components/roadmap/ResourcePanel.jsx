@@ -1,6 +1,19 @@
 import Button from '@/components/shared/Button'
 
-export default function ResourcePanel({ node }) {
+export default function ResourcePanel({ node, onStart, onComplete, isActionLoading = false }) {
+  const isComplete = node.status === 'complete'
+  const isCurrent = node.status === 'current'
+
+  let actionLabel = 'Start'
+  let actionHandler = onStart
+  if (isComplete) {
+    actionLabel = 'Completed'
+    actionHandler = undefined
+  } else if (isCurrent) {
+    actionLabel = 'Mark complete'
+    actionHandler = onComplete
+  }
+
   return (
     <div className="animate-rise mt-6 space-y-6 rounded-2xl border border-gray-100 bg-white p-6">
       <div>
@@ -46,8 +59,8 @@ export default function ResourcePanel({ node }) {
       )}
 
       <div>
-        <Button size="sm" disabled={node.status === 'complete'}>
-          {node.status === 'complete' ? 'Completed' : 'Start'}
+        <Button size="sm" onClick={actionHandler} disabled={isComplete || isActionLoading}>
+          {isActionLoading ? 'Updating...' : actionLabel}
         </Button>
       </div>
     </div>
