@@ -9,13 +9,14 @@ import { completeLearningStep, getLearningPath, startLearningStep } from '@/serv
 export default function Path() {
   const { learningPath, sessionId } = useAppState()
   const dispatch = useAppDispatch()
-  const [isLoading, setIsLoading] = useState(!learningPath)
+  const hasCanonicalSteps = Array.isArray(learningPath?.steps)
+  const [isLoading, setIsLoading] = useState(!hasCanonicalSteps)
   const [stepActionLoadingId, setStepActionLoadingId] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     async function fetchPath() {
-      if (learningPath) {
+      if (hasCanonicalSteps) {
         setIsLoading(false)
         return
       }
@@ -38,7 +39,7 @@ export default function Path() {
     }
 
     fetchPath()
-  }, [learningPath, sessionId, navigate, dispatch])
+  }, [hasCanonicalSteps, sessionId, navigate, dispatch])
 
   if (isLoading) return null
 

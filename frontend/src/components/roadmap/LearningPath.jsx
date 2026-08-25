@@ -3,7 +3,7 @@ import PathNode from './PathNode'
 
 export default function LearningPath({ learningPath, onStartStep, onCompleteStep, stepActionLoadingId }) {
   const [expandedId, setExpandedId] = useState(
-    learningPath?.nodes?.find((n) => n.status === 'current')?.id ?? null
+    learningPath?.steps?.find((step) => step.status === 'current')?.id ?? null
   )
 
   if (!learningPath) return null
@@ -15,17 +15,17 @@ export default function LearningPath({ learningPath, onStartStep, onCompleteStep
       </p>
 
       <ol className="mt-8">
-        {learningPath.nodes?.map((node, i) => (
+        {learningPath.steps?.map((step, i) => (
           <PathNode
-            key={node.id}
-            node={node}
+            key={step.id}
+            step={step}
             index={i}
-            isLast={i === (learningPath.nodes?.length ?? 0) - 1}
-            isExpanded={expandedId === node.id}
-            onToggle={() => setExpandedId((prev) => (prev === node.id ? null : node.id))}
+            isLast={i === (learningPath.steps?.length ?? 0) - 1}
+            isExpanded={expandedId === step.id}
+            onToggle={() => setExpandedId((prev) => (prev === step.id ? null : step.id))}
             onStartStep={onStartStep}
             onCompleteStep={onCompleteStep}
-            isActionLoading={stepActionLoadingId === node.id}
+            isActionLoading={stepActionLoadingId === step.id}
           />
         ))}
       </ol>

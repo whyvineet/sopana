@@ -1,13 +1,13 @@
 import ResourcePanel from './ResourcePanel'
 
 const MARKER = {
-  complete: { className: 'border-gray-950 bg-gray-950 text-white', glyph: '✓' },
+  completed: { className: 'border-gray-950 bg-gray-950 text-white', glyph: '✓' },
   current: { className: 'border-signal-500 bg-signal-500 text-white', glyph: '●' },
   upcoming: { className: 'border-gray-300 bg-white text-gray-300', glyph: '○' },
 }
 
 export default function PathNode({
-  node,
+  step,
   index,
   isLast,
   isExpanded,
@@ -16,7 +16,7 @@ export default function PathNode({
   onCompleteStep,
   isActionLoading,
 }) {
-  const marker = MARKER[node.status]
+  const marker = MARKER[step.status] ?? MARKER.upcoming
   // A gentle alternating step-in, evoking a staircase without breaking
   // the reading rhythm — collapses to a flat column on narrow screens.
   const stepOffset = index % 2 === 1 ? 'sm:ml-10' : ''
@@ -43,11 +43,11 @@ export default function PathNode({
           >
             <div>
               <h3 className="font-display text-xl text-gray-950 sm:text-2xl">
-                {node.title}
+                {step.title}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {node.subtitle}
-                {node.duration && <span className="text-gray-400"> · {node.duration}</span>}
+                {step.description}
+                {step.duration && <span className="text-gray-400"> · {step.duration}</span>}
               </p>
             </div>
             <span
@@ -61,9 +61,9 @@ export default function PathNode({
 
           {isExpanded && (
             <ResourcePanel
-              node={node}
-              onStart={() => onStartStep?.(node.id)}
-              onComplete={() => onCompleteStep?.(node.id)}
+              step={step}
+              onStart={() => onStartStep?.(step.id)}
+              onComplete={() => onCompleteStep?.(step.id)}
               isActionLoading={isActionLoading}
             />
           )}

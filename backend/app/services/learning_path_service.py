@@ -106,14 +106,14 @@ def generate_learning_path(
                 id=f"skill_{skill_id}",
                 title=_skill_step_title(skill.name, status),
                 description=f"Master {skill.name} to progress towards your goal.",
-                type="strengthen" if status == "developing" else "skill",
+                status="upcoming",
+                completed=False,
                 skills=[skill_id],
                 prerequisites=[
                     repo.get_skill(prereq_id).name if repo.get_skill(prereq_id) else prereq_id
                     for prereq_id in skill.prerequisites
                 ],
-                difficulty=difficulty,
-                estimated_duration=_DIFFICULTY_DURATION[difficulty],
+                duration=_DIFFICULTY_DURATION[difficulty],
                 resources=_resource_refs(skill_id),
             )
         )
@@ -129,14 +129,14 @@ def generate_learning_path(
                         id=f"project_{project.id}",
                         title=project.title,
                         description=project.description,
-                        type="project",
+                        status="upcoming",
+                        completed=False,
                         skills=project.skill_ids,
                         prerequisites=[
                             repo.get_skill(sid).name if repo.get_skill(sid) else sid
                             for sid in project.skill_ids
                         ],
-                        difficulty="intermediate",
-                        estimated_duration="~1 week",
+                        duration="~1 week",
                         project=_project_ref(project),
                     )
                 )
@@ -148,14 +148,14 @@ def generate_learning_path(
                     id=f"project_{project.id}",
                     title=project.title,
                     description=project.description,
-                    type="project",
+                    status="upcoming",
+                    completed=False,
                     skills=project.skill_ids,
                     prerequisites=[
                         repo.get_skill(sid).name if repo.get_skill(sid) else sid
                         for sid in project.skill_ids
                     ],
-                    difficulty="intermediate",
-                    estimated_duration="~1 week",
+                    duration="~1 week",
                     project=_project_ref(project),
                 )
             )

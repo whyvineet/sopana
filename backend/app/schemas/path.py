@@ -43,15 +43,13 @@ class LearningStep(BaseModel):
     id: str
     title: str
     description: str
-    type: str  # strengthen | skill | project
+    status: str = "upcoming"  # upcoming | current | completed
+    completed: bool = False
     skills: list[str]
     prerequisites: list[str]
-    difficulty: str
-    estimated_duration: str
+    duration: str
     resources: list[ResourceRef] = Field(default_factory=list)
     project: ProjectRef | None = None
-    status: str = "upcoming"
-    completed: bool = False
 
 
 class LearningPath(BaseModel):

@@ -133,25 +133,47 @@ export async function completeLearningStep(sessionId, stepId) {
 function normalizeLearningPath(raw) {
   if (!raw || typeof raw !== 'object') return null
 
+  const normalizedSteps = (raw.steps ?? raw.nodes ?? []).map((step) => ({
+    id: step.id,
+    title: step.title ?? '',
+    description: step.description ?? step.reason ?? '',
+    status: step.status === 'complete' ? 'completed' : step.status ?? 'upcoming',
+    skills: step.skills ?? [],
+    prerequisites: step.prerequisites ?? [],
+    resources: (step.resources ?? []).map((resource) =>
+      typeof resource === 'string'
+        ? { id: resource, title: resource, type: 'resource', url: null, skill_ids: [] }
+        : {
+            id: resource.id,
+            title: resource.title,
+            type: resource.type,
+            url: resource.url ?? null,
+            description: resource.description ?? null,
+            difficulty: resource.difficulty ?? null,
+            duration: resource.duration ?? resource.estimated_duration ?? null,
+            provider: resource.provider ?? null,
+            skill_ids: resource.skill_ids ?? resource.skillIds ?? [],
+          }
+    ),
+    project:
+      typeof step.project === 'string'
+        ? { id: step.project, title: step.project, description: '', skill_ids: [] }
+        : step.project
+          ? {
+              id: step.project.id,
+              title: step.project.title,
+              description: step.project.description,
+              skill_ids: step.project.skill_ids ?? step.project.skillIds ?? [],
+            }
+          : null,
+    duration: step.duration ?? step.estimated_duration ?? '',
+    completed: Boolean(step.completed ?? (step.status === 'completed')),
+  }))
+
   return {
     ...raw,
     target: raw.target ?? raw.role_name ?? '',
-    nodes: raw.nodes ?? (raw.steps ?? []).map((step) => ({
-      ...step,
-      subtitle: step.subtitle ?? step.description ?? '',
-      duration: step.duration ?? step.estimated_duration ?? '',
-      reason: step.reason ?? step.description ?? '',
-      skills: step.skills ?? [],
-      resources: (step.resources ?? []).map((resource) =>
-        typeof resource === 'string' ? resource : resource.title
-      ),
-      project: step.project
-        ? typeof step.project === 'string'
-          ? step.project
-          : step.project.title
-        : null,
-      status: step.status === 'completed' ? 'complete' : step.status ?? 'upcoming',
-    })),
+    steps: normalizedSteps,
   }
 }
 
