@@ -18,6 +18,7 @@ def get_chat_model() -> ChatOpenAI:
         raise LLMConfigurationError(
             "OPENROUTER_API_KEY is not set. Copy backend/.env.example to backend/.env and add your key."
         )
+    app_title = settings.openrouter_app_title.encode("ascii", "ignore").decode("ascii")
     return ChatOpenAI(
         model=settings.openrouter_model,
         api_key=settings.openrouter_api_key,
@@ -25,6 +26,6 @@ def get_chat_model() -> ChatOpenAI:
         temperature=0.2,
         default_headers={
             "HTTP-Referer": settings.openrouter_http_referer,
-            "X-Title": settings.openrouter_app_title,
+            "X-Title": app_title,
         },
     )

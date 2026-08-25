@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(default="", alias="OPENROUTER_API_KEY")
     openrouter_model: str = Field(default="openai/gpt-4o-mini", alias="OPENROUTER_MODEL")
     openrouter_http_referer: str = Field(default="http://localhost:5173", alias="OPENROUTER_HTTP_REFERER")
-    openrouter_app_title: str = Field(default="SOPĀNA", alias="OPENROUTER_APP_TITLE")
+    openrouter_app_title: str = Field(default="SOPANA", alias="OPENROUTER_APP_TITLE")
     cors_origins: str = Field(default="", alias="CORS_ORIGINS")
 
     @property
