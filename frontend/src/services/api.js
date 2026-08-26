@@ -70,7 +70,9 @@ async function request(path, options = {}) {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH' 
+            ? { 'Content-Type': 'application/json' } 
+            : {}),
         ...options.headers,
       },
       signal: controller.signal,
