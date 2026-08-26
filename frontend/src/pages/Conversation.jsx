@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import PageContainer from '@/components/layout/PageContainer'
+import Button from '@/components/shared/Button'
 import ChatWindow from '@/components/conversation/ChatWindow'
 import { useAppState } from '@/context/AppContext'
 import { useConversation } from '@/hooks/useConversation'
@@ -7,13 +7,7 @@ import { useConversation } from '@/hooks/useConversation'
 export default function Conversation() {
   const { sessionId, messages, stage } = useAppState()
   const { send, retryLast, isLoading, error, clearError } = useConversation()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!sessionId) navigate('/', { replace: true })
-  }, [sessionId, navigate])
-
-  if (!sessionId) return null
+  if (!sessionId) return <PageContainer><p className="text-gray-500">Your assistant session is ready to begin.</p><Button className="mt-6" onClick={() => window.location.assign('/start-onboarding')}>Start onboarding</Button></PageContainer>
 
   const handleSend = ({ text, optionIds, displayText }) => {
     clearError()

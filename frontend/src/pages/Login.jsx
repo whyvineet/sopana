@@ -35,7 +35,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const destination = location.state?.from?.pathname || '/dashboard'
+  const destination = location.state?.from?.pathname || '/'
 
   function destinationFor(profile) {
     return profile?.onboardingCompleted ? destination : '/onboarding'

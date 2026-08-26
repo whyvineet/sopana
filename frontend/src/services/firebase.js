@@ -68,11 +68,33 @@ export async function createUserProfile(user, name = '') {
     email: user.email || '',
     onboardingCompleted: false,
     onboardingStep: 'profile',
+    appState: null,
+    lastRoute: '/start-onboarding',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }
   await setDoc(ref, profile)
   return profile
+}
+
+export async function saveApplicationState(uid, state, updates = {}) {
+  await updateDoc(profileRef(uid), {
+    ...updates,
+    appState: {
+      sessionId: state.sessionId ?? null,
+      messages: state.messages ?? [],
+      stage: state.stage ?? null,
+      answers: state.answers ?? [],
+      learnerProfile: state.learnerProfile ?? null,
+      missingInformation: state.missingInformation ?? [],
+      skillGap: state.skillGap ?? null,
+      learningPath: state.learningPath ?? null,
+      dashboard: state.dashboard ?? null,
+      conversationComplete: Boolean(state.conversationComplete),
+    },
+    sessionId: state.sessionId ?? null,
+    updatedAt: serverTimestamp(),
+  })
 }
 
 export async function updateOnboardingStep(uid, onboardingStep, data = {}) {

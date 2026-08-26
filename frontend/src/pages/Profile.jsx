@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageContainer from '@/components/layout/PageContainer'
 import ProfileOverview from '@/components/profile/ProfileOverview'
@@ -10,11 +9,14 @@ export default function Profile() {
   const { learnerProfile, skillGap, learningPath } = useAppState()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!learnerProfile) navigate('/', { replace: true })
-  }, [learnerProfile, navigate])
-
-  if (!learnerProfile) return null
+  if (!learnerProfile) {
+    return (
+      <PageContainer>
+        <p className="text-gray-500">Your profile is still loading.</p>
+        <Button className="mt-6" onClick={() => navigate('/start-onboarding')}>Continue onboarding</Button>
+      </PageContainer>
+    )
+  }
 
   return (
     <PageContainer>

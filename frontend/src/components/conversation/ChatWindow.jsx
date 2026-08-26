@@ -46,6 +46,7 @@ export default function ChatWindow({ messages, stage, isLoading, error, onSend, 
 
         {awaitingInput && lastMessage.inputType !== 'text' && lastMessage.inputType !== 'complete' && (
           <OptionSelector
+            key={lastMessage.id}
             options={lastMessage.options || []}
             inputType={lastMessage.inputType}
             disabled={isLoading}

@@ -31,14 +31,17 @@ export default function Onboarding() {
               stage: response.stage,
             },
           })
+          if (response.messages?.length) dispatch({ type: 'HYDRATE', payload: { messages: response.messages } })
         } catch {
           // The old backend session may have expired; a new one can be started.
         }
       }
     }
     restoreSession()
-    if (profile?.onboardingCompleted || conversationComplete) navigate('/dashboard', { replace: true })
-    else if (sessionId) navigate('/journey', { replace: true })
+    if (conversationComplete || (profile?.onboardingCompleted && sessionId)) {
+      navigate('/dashboard', { replace: true })
+    }
+    else if (sessionId) navigate('/ai-assistant', { replace: true })
   }, [conversationComplete, dispatch, navigate, profile, sessionId])
 
   return (

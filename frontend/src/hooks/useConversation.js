@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api, ApiError } from '@/services/api'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
-import { completeOnboarding, updateOnboardingStep } from '@/services/firebase'
+import { completeOnboarding, saveApplicationState, updateOnboardingStep } from '@/services/firebase'
 
 const ONBOARDING_STEPS = ['profile', 'skills', 'interests', 'preferences', 'goal', 'assessment', 'roadmap']
 
@@ -33,13 +33,14 @@ export function useConversation() {
         },
       })
       if (user) await updateOnboardingStep(user.uid, 'profile', { sessionId: res.sessionId })
-      navigate('/journey')
+      if (user) await saveApplicationState(user.uid, { ...state, sessionId: res.sessionId, messages: res.messages?.length ? res.messages : [{ id: crypto.randomUUID(), role: 'ai', text: res.message, inputType: res.inputType, options: res.options }], stage: res.stage }, { lastRoute: '/ai-assistant' })
+      navigate('/ai-assistant')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.')
     } finally {
       setIsLoading(false)
     }
-  }, [dispatch, navigate, user])
+  }, [dispatch, navigate, state, user])
 
   const send = useCallback(
     async ({ text, optionIds, displayText }) => {
@@ -63,6 +64,19 @@ export function useConversation() {
 
         dispatch({ type: 'ADD_AI_RESPONSE', payload: res })
 
+        const nextState = {
+          ...state,
+          sessionId: state.sessionId,
+          messages: [...state.messages, { id: crypto.randomUUID(), role: 'user', text: displayText }, ...(res.message ? [{ id: crypto.randomUUID(), role: 'ai', text: res.message, inputType: res.inputType, options: res.options }] : [])],
+          stage: res.stage,
+          learnerProfile: res.profile ?? state.learnerProfile,
+          missingInformation: res.missingInformation ?? state.missingInformation,
+          skillGap: res.skillGap ?? state.skillGap,
+          learningPath: res.learningPath ?? state.learningPath,
+          dashboard: res.dashboard ?? state.dashboard,
+          conversationComplete: res.done,
+        }
+
         if (user) {
           if (res.done) {
             await completeOnboarding(user.uid)
@@ -72,10 +86,11 @@ export function useConversation() {
             const index = res.stage?.index ?? 0
             await updateOnboardingStep(user.uid, ONBOARDING_STEPS[Math.min(index, ONBOARDING_STEPS.length - 1)])
           }
+          await saveApplicationState(user.uid, nextState, { lastRoute: res.done ? '/journey' : '/ai-assistant' })
         }
 
         if (res.done) {
-          navigate('/profile')
+          navigate('/journey')
         }
       } catch (err) {
         setFailedPayload({ text, optionIds, displayText })
@@ -84,7 +99,7 @@ export function useConversation() {
         setIsLoading(false)
       }
     },
-    [dispatch, navigate, refreshProfile, state.sessionId, user]
+    [dispatch, navigate, refreshProfile, state, user]
   )
 
   const retryLast = useCallback(async () => {

@@ -170,6 +170,7 @@ def _public_snapshot(state: LearningState) -> dict[str, Any]:
         "learning_path": state.get("learning_path"),
         "dashboard": _build_dashboard(state),
         "error": state.get("error"),
+        "messages": _serialize_messages(state.get("messages", [])),
     }
 
 

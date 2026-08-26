@@ -14,6 +14,11 @@ class ConversationOption(BaseModel):
     label: str
 
 
+class ConversationMessage(BaseModel):
+    role: str
+    content: str
+
+
 class ProgressInfo(BaseModel):
     current: int
     total: int
@@ -34,3 +39,4 @@ class ConversationResponse(BaseModel):
     skill_gap: dict | None = None
     learning_path: dict | None = None
     error: str | None = None
+    messages: list[ConversationMessage] = Field(default_factory=list)

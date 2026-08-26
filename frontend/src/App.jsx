@@ -5,12 +5,14 @@ import Landing from '@/pages/Landing'
 import Login from '@/pages/Login'
 import Onboarding from '@/pages/Onboarding'
 import Conversation from '@/pages/Conversation'
+import Journey from '@/pages/Journey'
 import Profile from '@/pages/Profile'
 import Path from '@/pages/Path'
 import Dashboard from '@/pages/Dashboard'
 import { useAuth } from '@/context/AuthContext'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
 import { api } from '@/services/api'
+import { saveApplicationState } from '@/services/firebase'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth()
@@ -37,9 +39,11 @@ function JourneyRestorer({ children }) {
           payload: {
             sessionId: response.sessionId,
             stage: response.stage,
-            messages: response.message
-              ? [{ id: crypto.randomUUID(), role: 'ai', text: response.message, inputType: response.inputType, options: response.options }]
-              : [],
+            messages: response.messages?.length
+              ? response.messages
+              : response.message
+                ? [{ id: crypto.randomUUID(), role: 'ai', text: response.message, inputType: response.inputType, options: response.options }]
+                : [],
             learnerProfile: response.profile,
             missingInformation: response.missingInformation,
             skillGap: response.skillGap,
@@ -67,6 +71,17 @@ function JourneyRestorer({ children }) {
 }
 
 function App() {
+  const location = useLocation()
+  const { user } = useAuth()
+  const appState = useAppState()
+
+  useEffect(() => {
+    const routes = ['/journey', '/path', '/dashboard', '/progress', '/ai-assistant']
+    if (user && appState.sessionId && routes.includes(location.pathname)) {
+      saveApplicationState(user.uid, appState, { lastRoute: location.pathname }).catch(() => {})
+    }
+  }, [appState, location.pathname, user])
+
   return (
     <div className="min-h-screen bg-paper text-gray-900">
       <Navbar />
@@ -75,7 +90,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-        <Route path="/journey" element={<ProtectedRoute><Conversation /></ProtectedRoute>} />
+        <Route path="/start-onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+        <Route path="/journey" element={<ProtectedRoute><Journey /></ProtectedRoute>} />
         <Route path="/ai-assistant" element={<ProtectedRoute><Conversation /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/path" element={<ProtectedRoute><Path /></ProtectedRoute>} />

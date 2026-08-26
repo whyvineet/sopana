@@ -19,7 +19,7 @@ export default function Dashboard() {
       }
 
       if (!sessionId) {
-        navigate('/', { replace: true })
+        setIsLoading(false)
         return
       }
 
@@ -29,7 +29,6 @@ export default function Dashboard() {
         dispatch({ type: 'ADD_AI_RESPONSE', payload: { dashboard: data } })
       } catch (err) {
         console.error('Failed to fetch dashboard:', err)
-        navigate('/path', { replace: true })
       } finally {
         setIsLoading(false)
       }
@@ -40,7 +39,7 @@ export default function Dashboard() {
 
   if (isLoading) return null
 
-  if (!dashboard) return null
+  if (!dashboard) return <PageContainer><p className="text-gray-500">Complete onboarding to see your progress.</p></PageContainer>
 
   return (
     <PageContainer>

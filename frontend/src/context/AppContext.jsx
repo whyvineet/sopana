@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
+import { useAuth } from '@/context/AuthContext'
 
 const STORAGE_KEY = 'sopana_session'
 
@@ -111,6 +112,14 @@ export function AppProvider({ children }) {
     const persisted = loadPersisted()
     return persisted ? { ...initialState, ...persisted } : initialState
   })
+  const { user, profile, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && user && profile?.appState) {
+      dispatch({ type: 'HYDRATE', payload: profile.appState })
+    }
+    if (!user && !authLoading) dispatch({ type: 'RESET' })
+  }, [authLoading, profile, user])
 
   useEffect(() => {
     persist(state)
@@ -123,18 +132,21 @@ export function AppProvider({ children }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAppState() {
   const ctx = useContext(AppStateContext)
   if (!ctx) throw new Error('useAppState must be used within AppProvider')
   return ctx
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAppDispatch() {
   const ctx = useContext(AppDispatchContext)
   if (!ctx) throw new Error('useAppDispatch must be used within AppProvider')
   return ctx
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useJourneyProgress() {
   const { stage } = useAppState()
   return useMemo(() => stage ?? { index: 0, total: 1, label: '' }, [stage])

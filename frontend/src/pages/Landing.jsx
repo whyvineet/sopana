@@ -19,11 +19,14 @@ export default function Landing() {
     if (!isAuthenticated) {
       navigate('/login')
     } else if (profile?.onboardingCompleted || conversationComplete) {
-      navigate('/dashboard')
+      const savedRoute = ['/journey', '/path', '/dashboard', '/progress'].includes(profile?.lastRoute)
+        ? profile.lastRoute
+        : '/dashboard'
+      navigate(savedRoute)
     } else if (sessionId) {
-      navigate('/journey')
+      navigate('/ai-assistant')
     } else {
-      navigate('/onboarding')
+      navigate('/start-onboarding')
     }
   }
 
@@ -33,7 +36,7 @@ export default function Landing() {
         onStart={startJourney}
         onSeeHowItWorks={scrollToHowItWorks}
         isLoading={loading}
-        startLabel={isAuthenticated ? 'Track your journey' : 'Start your journey'}
+        startLabel={isAuthenticated ? 'Track Your Progress' : 'Start Your Journey'}
       />
 
       <HowItWorks innerRef={howItWorksRef} />

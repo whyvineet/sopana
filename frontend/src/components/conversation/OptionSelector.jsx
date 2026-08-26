@@ -1,13 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Button from '@/components/shared/Button'
 
 export default function OptionSelector({ options, inputType, disabled, onSubmit }) {
   const [selected, setSelected] = useState([])
   const isMulti = inputType === 'multi_select'
-
-  useEffect(() => {
-    setSelected([])
-  }, [options, inputType])
 
   const toggle = (option) => {
     if (disabled) return

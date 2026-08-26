@@ -117,6 +117,11 @@ export async function startLearningStep(sessionId, stepId) {
   return {
     learningPath: normalizeLearningPath(raw.learning_path),
     dashboard: normalizeDashboard(raw.dashboard),
+    messages: (raw.messages ?? []).map((message) => ({
+      id: crypto.randomUUID(),
+      role: message.role === 'human' || message.role === 'user' ? 'user' : 'ai',
+      text: message.content ?? message.text ?? '',
+    })),
   }
 }
 

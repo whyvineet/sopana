@@ -4,11 +4,15 @@ import PageContainer from '@/components/layout/PageContainer'
 import LearningPath from '@/components/roadmap/LearningPath'
 import Button from '@/components/shared/Button'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
+import { saveApplicationState } from '@/services/firebase'
 import { completeLearningStep, getLearningPath, startLearningStep } from '@/services/api'
 
 export default function Path() {
-  const { learningPath, sessionId } = useAppState()
+  const appState = useAppState()
+  const { learningPath, sessionId } = appState
   const dispatch = useAppDispatch()
+  const { user } = useAuth()
   const hasCanonicalSteps = Array.isArray(learningPath?.steps)
   const [isLoading, setIsLoading] = useState(!hasCanonicalSteps)
   const [stepActionLoadingId, setStepActionLoadingId] = useState(null)
@@ -22,7 +26,7 @@ export default function Path() {
       }
 
       if (!sessionId) {
-        navigate('/', { replace: true })
+        setIsLoading(false)
         return
       }
 
@@ -32,7 +36,7 @@ export default function Path() {
         dispatch({ type: 'ADD_AI_RESPONSE', payload: { learningPath: data } })
       } catch (err) {
         console.error('Failed to fetch learning path:', err)
-        navigate('/', { replace: true })
+        return
       } finally {
         setIsLoading(false)
       }
@@ -43,7 +47,7 @@ export default function Path() {
 
   if (isLoading) return null
 
-  if (!learningPath) return null
+  if (!learningPath) return <PageContainer><p className="text-gray-500">Your learning path will appear after onboarding.</p></PageContainer>
 
   const handleStartStep = async (stepId) => {
     if (!sessionId || !stepId || stepActionLoadingId) return
@@ -57,6 +61,7 @@ export default function Path() {
           dashboard: data.dashboard,
         },
       })
+      if (user) await saveApplicationState(user.uid, { ...appState, learningPath: data.learningPath, dashboard: data.dashboard }, { lastRoute: '/path' })
     } catch (err) {
       console.error('Failed to start learning step:', err)
     } finally {
@@ -76,6 +81,7 @@ export default function Path() {
           dashboard: data.dashboard,
         },
       })
+      if (user) await saveApplicationState(user.uid, { ...appState, learningPath: data.learningPath, dashboard: data.dashboard }, { lastRoute: '/path' })
     } catch (err) {
       console.error('Failed to complete learning step:', err)
     } finally {
