@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     openrouter_model: str = Field(default="openai/gpt-4o-mini", alias="OPENROUTER_MODEL")
     openrouter_http_referer: str = Field(default="http://localhost:5173", alias="OPENROUTER_HTTP_REFERER")
     openrouter_app_title: str = Field(default="SOPANA", alias="OPENROUTER_APP_TITLE")
-    cors_origins: str = Field(default="", alias="CORS_ORIGINS")
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        alias="CORS_ORIGINS",
+    )
 
     @property
     def cors_origin_list(self) -> list[str]:
