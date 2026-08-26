@@ -23,6 +23,15 @@ def start_conversation() -> ConversationResponse:
     return ConversationResponse(**result)
 
 
+@router.get("/conversation/{session_id}", response_model=ConversationResponse)
+def get_conversation(session_id: str) -> ConversationResponse:
+    try:
+        result = conversation_service.get_conversation(session_id)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Unknown session_id.") from exc
+    return ConversationResponse(**result)
+
+
 @router.post("/conversation/message", response_model=ConversationResponse)
 def send_message(payload: MessageRequest) -> ConversationResponse:
     if not payload.message.strip() and not payload.selected_options:

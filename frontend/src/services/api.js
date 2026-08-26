@@ -265,6 +265,11 @@ export const api = {
     return normalizeConversationResponse(raw)
   },
 
+  async getConversation(sessionId) {
+    const raw = await request(`/api/v1/conversation/${sessionId}`)
+    return normalizeConversationResponse(raw)
+  },
+
   /**
    * @param {object} params
    * @param {string} params.sessionId

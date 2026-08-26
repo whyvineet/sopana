@@ -181,6 +181,13 @@ def start_conversation() -> dict[str, Any]:
     return _public_snapshot(result)
 
 
+def get_conversation(session_id: str) -> dict[str, Any]:
+    stored = get_session_store().get(session_id)
+    if stored is None:
+        raise SessionNotFoundError(session_id)
+    return _public_snapshot(_from_storage(stored))
+
+
 def send_message(session_id: str, text: str, selected_options: list[str] | None = None) -> dict[str, Any]:
     stored = get_session_store().get(session_id)
     if stored is None:

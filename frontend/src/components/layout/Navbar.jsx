@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { useAppState } from '@/context/AppContext'
+import { useAppDispatch } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
 
 const LINKS = [
   { to: '/journey', label: 'Journey' },
@@ -8,7 +9,8 @@ const LINKS = [
 ]
 
 export default function Navbar() {
-  const { sessionId } = useAppState()
+  const { isAuthenticated, logout } = useAuth()
+  const dispatch = useAppDispatch()
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-100 bg-paper/90 backdrop-blur-sm">
@@ -23,7 +25,7 @@ export default function Navbar() {
           SOPĀNA
         </NavLink>
 
-        {sessionId && (
+        {isAuthenticated && (
           <ul className="flex items-center gap-1">
             {LINKS.map((link) => (
               <li key={link.to}>
@@ -43,6 +45,7 @@ export default function Navbar() {
             ))}
           </ul>
         )}
+        {isAuthenticated && <button type="button" onClick={async () => { await logout(); dispatch({ type: 'RESET' }); window.location.assign('/') }} className="ml-3 text-sm text-gray-500 hover:text-gray-950">Log out</button>}
       </nav>
     </header>
   )

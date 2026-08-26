@@ -1,23 +1,23 @@
 const STEPS = [
   {
     n: '01',
-    title: 'Say where you want to go',
-    body: 'No forms. Just a conversation about the role or skill you\u2019re aiming for.',
+    title: 'Start your journey',
+    body: 'Tell us the role or skill you\u2019re aiming for, then continue securely with your Sopana account.',
   },
   {
     n: '02',
-    title: 'SOPĀNA maps where you are',
-    body: 'A few honest questions about your experience, skills, and goals — nothing to fake.',
+    title: 'Create an account or sign in',
+    body: 'Your account keeps your profile and progress safe, whether you\u2019re starting fresh or returning to your path.',
   },
   {
     n: '03',
-    title: 'See the gap, clearly',
-    body: 'What you already have, what\u2019s developing, and what needs attention — no guesswork.',
+    title: 'Build your profile with AI',
+    body: 'Answer a few honest questions about your experience, skills, and goals. Close the app and you can resume onboarding later.',
   },
   {
     n: '04',
-    title: 'Walk a path built for you',
-    body: 'An ordered route from where you are to where you\u2019re going, one step at a time.',
+    title: 'Follow your personalized path',
+    body: 'See your skill gap and learning roadmap in the dashboard, then move forward one focused step at a time.',
   },
 ]
 

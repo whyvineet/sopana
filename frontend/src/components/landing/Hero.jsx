@@ -1,7 +1,7 @@
 import Button from '@/components/shared/Button'
 import BackendStatus from './BackendStatus'
 
-export default function Hero({ onStart, onSeeHowItWorks, isLoading }) {
+export default function Hero({ onStart, onSeeHowItWorks, isLoading, startLabel }) {
   return (
     <section className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-6">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -24,7 +24,7 @@ export default function Hero({ onStart, onSeeHowItWorks, isLoading }) {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button size="lg" onClick={onStart} disabled={isLoading}>
-            {isLoading ? 'Starting…' : 'Start your journey'}
+            {isLoading ? 'Checking your account…' : startLabel}
           </Button>
           <Button variant="ghost" size="lg" onClick={onSeeHowItWorks}>
             See how it works

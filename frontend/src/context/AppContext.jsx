@@ -38,6 +38,8 @@ function reducer(state, action) {
   switch (action.type) {
     case 'HYDRATE':
       return { ...state, ...action.payload }
+    case 'RESET_JOURNEY':
+      return initialState
     case 'START_CONVERSATION':
       return {
         ...initialState,
@@ -80,7 +82,7 @@ function reducer(state, action) {
       return {
         ...state,
         stage: stage ?? state.stage,
-        conversationComplete: done,
+        conversationComplete: done ?? state.conversationComplete,
         learnerProfile: profile ?? state.learnerProfile,
         missingInformation: missingInformation ?? state.missingInformation,
         skillGap: skillGap ?? state.skillGap,

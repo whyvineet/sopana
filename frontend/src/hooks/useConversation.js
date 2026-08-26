@@ -2,10 +2,15 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, ApiError } from '@/services/api'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
+import { useAuth } from '@/context/AuthContext'
+import { completeOnboarding, updateOnboardingStep } from '@/services/firebase'
+
+const ONBOARDING_STEPS = ['profile', 'skills', 'interests', 'preferences', 'goal', 'assessment', 'roadmap']
 
 export function useConversation() {
   const dispatch = useAppDispatch()
   const state = useAppState()
+  const { user, refreshProfile } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [failedPayload, setFailedPayload] = useState(null)
@@ -27,13 +32,14 @@ export function useConversation() {
           stage: res.stage,
         },
       })
+      if (user) await updateOnboardingStep(user.uid, 'profile', { sessionId: res.sessionId })
       navigate('/journey')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.')
     } finally {
       setIsLoading(false)
     }
-  }, [dispatch, navigate])
+  }, [dispatch, navigate, user])
 
   const send = useCallback(
     async ({ text, optionIds, displayText }) => {
@@ -57,6 +63,17 @@ export function useConversation() {
 
         dispatch({ type: 'ADD_AI_RESPONSE', payload: res })
 
+        if (user) {
+          if (res.done) {
+            await completeOnboarding(user.uid)
+            await refreshProfile()
+          }
+          else {
+            const index = res.stage?.index ?? 0
+            await updateOnboardingStep(user.uid, ONBOARDING_STEPS[Math.min(index, ONBOARDING_STEPS.length - 1)])
+          }
+        }
+
         if (res.done) {
           navigate('/profile')
         }
@@ -67,7 +84,7 @@ export function useConversation() {
         setIsLoading(false)
       }
     },
-    [dispatch, navigate, state.sessionId]
+    [dispatch, navigate, refreshProfile, state.sessionId, user]
   )
 
   const retryLast = useCallback(async () => {
