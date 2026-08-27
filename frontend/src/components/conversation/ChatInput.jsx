@@ -50,8 +50,8 @@ export default function ChatInput({ disabled, onSend, placeholder = 'Type your a
         onClick={submit}
         disabled={disabled || !value.trim()}
         aria-label="Send message"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-950
-          text-white transition-colors duration-150 hover:bg-signal-700
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-950
+          text-white transition-colors duration-150 hover:bg-gray-800
           disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">

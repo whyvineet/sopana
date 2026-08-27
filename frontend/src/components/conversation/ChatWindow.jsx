@@ -6,7 +6,7 @@ import ChatInput from './ChatInput'
 import ProgressIndicator from './ProgressIndicator'
 import ErrorPanel from '@/components/shared/ErrorPanel'
 
-export default function ChatWindow({ messages, stage, isLoading, error, onSend, onRetry }) {
+export default function ChatWindow({ messages, stage, isLoading, error, onSend, onRetry, hideHeader = false }) {
   const scrollRef = useRef(null)
   const lastMessage = messages[messages.length - 1]
   const awaitingInput = !isLoading && lastMessage?.role === 'ai'
@@ -17,13 +17,15 @@ export default function ChatWindow({ messages, stage, isLoading, error, onSend, 
   }, [messages, isLoading])
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col">
-      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-        <h1 className="font-display text-lg text-gray-950">
-          Let's understand where you're going.
-        </h1>
-        <ProgressIndicator stage={stage} />
-      </div>
+    <div className="flex h-full flex-col">
+      {!hideHeader && (
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <h1 className="font-display text-lg text-gray-950">
+            Let's understand where you're going.
+          </h1>
+          <ProgressIndicator stage={stage} />
+        </div>
+      )}
 
       <div
         ref={scrollRef}

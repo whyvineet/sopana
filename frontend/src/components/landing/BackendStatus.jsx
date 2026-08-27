@@ -4,7 +4,6 @@ const CONFIG = {
   checking: { dot: 'bg-gray-400', text: 'Checking AI system', pulse: true },
   connected: { dot: 'bg-emerald-500', text: 'AI system ready', pulse: false },
   unavailable: { dot: 'bg-red-400', text: 'AI system offline', pulse: false },
-  mock: { dot: 'bg-signal-500', text: 'AI system ready (demo mode)', pulse: false },
 }
 
 export default function BackendStatus() {

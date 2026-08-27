@@ -45,7 +45,24 @@ export default function Path() {
     fetchPath()
   }, [hasCanonicalSteps, sessionId, navigate, dispatch])
 
-  if (isLoading) return null
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <div className="animate-pulse space-y-8">
+          <div className="h-4 w-32 rounded bg-gray-200"></div>
+          <div className="mt-8 space-y-12 border-l-2 border-gray-100 pl-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-4">
+                <div className="h-6 w-2/3 rounded-md bg-gray-200"></div>
+                <div className="h-4 w-full rounded bg-gray-100"></div>
+                <div className="h-4 w-4/5 rounded bg-gray-100"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </PageContainer>
+    )
+  }
 
   if (!learningPath) return <PageContainer><p className="text-gray-500">Your learning path will appear after onboarding.</p></PageContainer>
 

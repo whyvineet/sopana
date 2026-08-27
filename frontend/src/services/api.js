@@ -1,41 +1,20 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 const REQUEST_TIMEOUT_MS = 120000
 
-const STAGE_ORDER = [
-  'goal',
-  'experience',
-  'skill_discovery',
-  'learning_interests',
-  'objectives',
-  'profile_review',
-  'complete',
-]
-
-const STAGE_LABELS = {
-  goal: 'Understanding your goal',
-  experience: 'Experience discovery',
-  skill_discovery: 'Skill discovery',
-  learning_interests: 'Learning interests',
-  objectives: 'Learning objectives',
-  profile_review: 'Profile review',
-  complete: 'Complete',
-}
-
 function normalizeStage(rawStage) {
   if (!rawStage) return null
   if (typeof rawStage === 'object') {
     return {
       index: rawStage.index ?? 0,
-      total: rawStage.total ?? STAGE_ORDER.length,
+      total: rawStage.total ?? 0,
       label: rawStage.label ?? '',
     }
   }
   if (typeof rawStage === 'string') {
-    const index = Math.max(0, STAGE_ORDER.indexOf(rawStage))
     return {
-      index,
-      total: STAGE_ORDER.length,
-      label: STAGE_LABELS[rawStage] ?? rawStage,
+      index: 0,
+      total: 0,
+      label: rawStage,
     }
   }
   return null
@@ -229,9 +208,6 @@ function normalizeConversationResponse(raw) {
   if (stage && progress && typeof progress === 'object') {
     stage.index = Math.max((progress.current ?? 1) - 1, 0)
     stage.total = progress.total ?? stage.total
-    if (!stage.label) {
-      stage.label = STAGE_LABELS[raw.stage] ?? raw.stage
-    }
   }
 
   return {

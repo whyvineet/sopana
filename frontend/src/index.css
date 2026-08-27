@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #fafaf9;
+  --color-paper: #ffffff;
   --color-paper-raised: #ffffff;
 
-  --color-signal-50: #eef1f6;
-  --color-signal-100: #dbe1ec;
-  --color-signal-300: #93a3c2;
-  --color-signal-500: #3d4f74;
-  --color-signal-600: #313f5e;
-  --color-signal-700: #26314a;
+  --color-signal-50: #f0fdfa;
+  --color-signal-100: #ccfbf1;
+  --color-signal-300: #5eead4;
+  --color-signal-500: #14b8a6;
+  --color-signal-600: #0d9488;
+  --color-signal-700: #0f766e;
 
-  --font-display: "Iowan Old Style", "Palatino Linotype", "URW Palladio L", Georgia, serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Outfit", "Space Grotesk", sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --animate-fade-in: fade-in 0.5s ease-out both;
   --animate-rise: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -40,13 +40,13 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-signal-500);
+    outline: 2px solid #0a0a0a;
     outline-offset: 2px;
     border-radius: 2px;
   }
 
   ::selection {
-    background-color: var(--color-signal-100);
+    background-color: #e5e7eb;
   }
 }
 

@@ -8,7 +8,7 @@ const TONES = {
 export default function Badge({ children, tone = 'neutral', className = '' }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium tracking-wide ${TONES[tone]} ${className}`}
+      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium tracking-wide ${TONES[tone]} ${className}`}
     >
       {children}
     </span>

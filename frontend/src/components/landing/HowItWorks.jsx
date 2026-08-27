@@ -33,7 +33,7 @@ export default function HowItWorks({ innerRef }) {
           {STEPS.map((step) => (
             <li key={step.n} className="relative pb-12 pl-8 last:pb-0">
               <span
-                className="absolute -left-[7px] top-1 h-3.5 w-3.5 rounded-full border-2 border-paper bg-gray-950"
+                className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-gray-950"
                 aria-hidden="true"
               />
               <span className="text-xs font-medium tracking-widest text-gray-400">

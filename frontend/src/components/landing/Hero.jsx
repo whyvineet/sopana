@@ -3,11 +3,7 @@ import BackendStatus from './BackendStatus'
 
 export default function Hero({ onStart, onSeeHowItWorks, isLoading, startLabel }) {
   return (
-    <section className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-6">
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute left-1/2 top-0 h-125 w-175 -translate-x-1/2 rounded-full bg-gray-100/70 blur-3xl" />
-      </div>
-
+    <section className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-6">
       <div className="relative w-full max-w-3xl text-center">
         <span className="text-sm font-medium tracking-[0.35em] text-gray-400">
           SOPĀNA

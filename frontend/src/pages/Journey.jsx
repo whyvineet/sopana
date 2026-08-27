@@ -29,13 +29,13 @@ export default function Journey() {
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
         <div className="h-full rounded-full bg-signal-500" style={{ width: `${dashboard.percentComplete}%` }} />
       </div>
-      <ol className="mt-12 border-l border-gray-200">
+      <ol className="mt-12 border-l border-gray-200 ml-2">
         {steps.map((step) => (
-          <li key={step.id} className="relative pb-8 pl-8 last:pb-0">
-            <span className={`absolute -left-[7px] top-1 h-3.5 w-3.5 rounded-full border-2 border-paper ${step.completed ? 'bg-gray-950' : step.status === 'current' ? 'bg-signal-500' : 'bg-white'}`} />
-            <p className="text-xs font-medium tracking-widest text-gray-400">{step.completed ? 'COMPLETED' : step.status === 'current' ? 'CURRENT' : 'UPCOMING'}</p>
-            <h2 className="font-display mt-1 text-xl text-gray-950">{step.title}</h2>
-            <p className="mt-1 text-sm text-gray-500">{step.description}</p>
+          <li key={step.id} className="relative pb-10 pl-8 last:pb-0">
+            <span className={`absolute -left-[5px] top-1.5 h-2 w-2 rounded-full ${step.completed ? 'bg-gray-950' : step.status === 'current' ? 'bg-gray-950' : 'bg-gray-300'}`} />
+            <p className="text-xs font-medium tracking-widest text-gray-400 mb-1">{step.completed ? 'COMPLETED' : step.status === 'current' ? 'CURRENT' : 'UPCOMING'}</p>
+            <h2 className={`font-display text-xl ${step.status === 'upcoming' ? 'text-gray-400' : 'text-gray-950'}`}>{step.title}</h2>
+            <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-2xl">{step.description}</p>
           </li>
         ))}
       </ol>

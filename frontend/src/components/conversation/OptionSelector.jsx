@@ -40,7 +40,7 @@ export default function OptionSelector({ options, inputType, disabled, onSubmit 
               disabled={disabled}
               aria-pressed={isMulti ? isSelected : undefined}
               onClick={() => toggle(option)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors duration-150
+              className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors duration-150
                 disabled:cursor-not-allowed disabled:opacity-40
                 ${
                   isSelected

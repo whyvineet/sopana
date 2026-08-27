@@ -15,7 +15,7 @@ export default function MessageBubble({ role, text }) {
           className={
             isAi
               ? 'text-[15px] leading-relaxed text-gray-800'
-              : 'rounded-2xl rounded-tr-sm bg-gray-950 px-4 py-2.5 text-[15px] leading-relaxed text-white'
+              : 'rounded-lg rounded-tr-none bg-gray-950 px-4 py-2.5 text-[15px] leading-relaxed text-white'
           }
         >
           {text}
