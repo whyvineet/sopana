@@ -7,6 +7,7 @@ from app.schemas.auth import (
     CompleteOnboardingRequest,
     SaveAppStateRequest,
     UpdateOnboardingStepRequest,
+    UpdateActiveSessionRequest,
     UserProfileResponse,
 )
 from app.services import user_service
@@ -44,6 +45,15 @@ def save_app_state(payload: SaveAppStateRequest, user: CurrentUser) -> UserProfi
         )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Could not save app state: {exc}") from exc
+
+
+@router.put("/me/active-session", response_model=UserProfileResponse)
+def update_active_session(payload: UpdateActiveSessionRequest, user: CurrentUser) -> UserProfileResponse:
+    uid = _user_id(user)
+    try:
+        return user_service.update_active_session(uid, payload.session_id)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Could not update active session: {exc}") from exc
 
 
 @router.put("/me/onboarding-step", response_model=UserProfileResponse)
