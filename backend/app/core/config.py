@@ -18,9 +18,28 @@ class Settings(BaseSettings):
         alias="CORS_ORIGINS",
     )
 
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_publishable_key: str = Field(default="", alias="SUPABASE_PUBLISHABLE_KEY")
+    supabase_secret_key: str = Field(default="", alias="SUPABASE_SECRET_KEY")
+    supabase_jwks_url: str = Field(default="", alias="SUPABASE_JWKS_URL")
+
+    tavily_api_key: str = Field(default="", alias="TAVILY_API_KEY")
+    search_timeout_seconds: int = Field(default=10, alias="SEARCH_TIMEOUT_SECONDS")
+    search_max_results: int = Field(default=5, alias="SEARCH_MAX_RESULTS")
+    research_cache_ttl_hours: int = Field(default=24, alias="RESEARCH_CACHE_TTL_HOURS")
+    max_path_repair_iterations: int = Field(default=2, alias="MAX_PATH_REPAIR_ITERATIONS")
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def supabase_configured(self) -> bool:
+        return bool(self.supabase_url and self.supabase_secret_key)
+
+    @property
+    def tavily_configured(self) -> bool:
+        return bool(self.tavily_api_key)
 
 
 @lru_cache

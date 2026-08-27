@@ -40,3 +40,12 @@ class ConversationResponse(BaseModel):
     learning_path: dict | None = None
     error: str | None = None
     messages: list[ConversationMessage] = Field(default_factory=list)
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., max_length=1000)
+    context_step_id: str | None = None
+
+
+class ChatResponse(BaseModel):
+    reply: str

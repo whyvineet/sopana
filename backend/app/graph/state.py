@@ -38,7 +38,6 @@ class LearningState(TypedDict):
     goal: str | None
     goal_summary: str | None
     target_role: str | None
-    matched_role_id: str | None
     selected_domains: list[str]
     selected_domain_ids: list[str]
     experience_level: str | None
@@ -62,6 +61,12 @@ class LearningState(TypedDict):
     learning_path: dict[str, Any] | None
     error: str | None
 
+    research_status: Literal["idle", "in_progress", "complete", "failed"]
+    role_research: dict[str, Any] | None
+    skill_requirements: list[dict[str, Any]]
+    candidate_path: dict[str, Any] | None
+    researched_resources: list[dict[str, Any]]
+
 
 def initial_state(session_id: str) -> LearningState:
     return LearningState(
@@ -72,7 +77,6 @@ def initial_state(session_id: str) -> LearningState:
         goal=None,
         goal_summary=None,
         target_role=None,
-        matched_role_id=None,
         selected_domains=[],
         selected_domain_ids=[],
         experience_level=None,
@@ -93,4 +97,9 @@ def initial_state(session_id: str) -> LearningState:
         skill_gap=None,
         learning_path=None,
         error=None,
+        research_status="idle",
+        role_research=None,
+        skill_requirements=[],
+        candidate_path=None,
+        researched_resources=[],
     )

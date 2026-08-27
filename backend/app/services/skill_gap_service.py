@@ -2,51 +2,64 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.knowledge.repository import get_repository, level_rank
+from app.knowledge.repository import level_rank
 from app.schemas.path import SkillGapItem, SkillGapResult
+from app.schemas.research import SkillRequirement
+
+
+def _level_name(level_int: int) -> str:
+    _map = {
+        1: "awareness",
+        2: "beginner",
+        3: "intermediate",
+        4: "advanced",
+        5: "expert"
+    }
+    return _map.get(level_int, "intermediate")
 
 
 def _learner_levels(learner_skills: list[dict[str, Any]]) -> dict[str, str]:
-    repo = get_repository()
     result: dict[str, str] = {}
     for claim in learner_skills:
-        skill = repo.get_skill(claim.get("skill_id")) or repo.find_skill_by_name(claim.get("name", ""))
-        if not skill:
+        skill_name = claim.get("name") or claim.get("label") or claim.get("skill")
+        if not skill_name:
             continue
-        current = result.get(skill.id)
+        skill_name = skill_name.strip().lower()
         claimed_level = claim.get("level") or "beginner"
+        
+        current = result.get(skill_name)
         if current is None or level_rank(claimed_level) > level_rank(current):
-            result[skill.id] = claimed_level
+            result[skill_name] = claimed_level
     return result
 
 
-def compute_skill_gap(role_id: str, learner_skills: list[dict[str, Any]]) -> SkillGapResult:
-    repo = get_repository()
-    role = repo.get_role(role_id)
-    if not role:
-        raise ValueError(f"Unknown role_id: {role_id}")
-
+def compute_dynamic_skill_gap(
+    role_name: str,
+    requirements: list[SkillRequirement],
+    learner_skills: list[dict[str, Any]],
+) -> SkillGapResult:
     learner_levels = _learner_levels(learner_skills)
     strong: list[SkillGapItem] = []
     developing: list[SkillGapItem] = []
     missing: list[SkillGapItem] = []
 
-    for req in role.required_skills:
-        skill = repo.get_skill(req.skill_id)
-        if not skill:
-            continue
-        current_level = learner_levels.get(req.skill_id, "none")
+    for req in requirements:
+        skill_key = req.skill.strip().lower()
+        required_level_str = _level_name(req.required_level)
+        
+        current_level = learner_levels.get(skill_key, "none")
         current_rank = level_rank(current_level)
+        
         item = SkillGapItem(
-            skill_id=skill.id,
-            skill_name=skill.name,
-            required_level=req.min_level,
+            skill_id=f"dynamic.{skill_key}",
+            skill_name=req.skill,
+            required_level=required_level_str,
             current_level=current_level,
             status="missing",
         )
         if current_rank == 0:
             missing.append(item)
-        elif current_rank >= level_rank(req.min_level):
+        elif current_rank >= level_rank(required_level_str):
             item.status = "strong"
             strong.append(item)
         else:
@@ -55,14 +68,15 @@ def compute_skill_gap(role_id: str, learner_skills: list[dict[str, Any]]) -> Ski
 
     total = len(strong) + len(developing) + len(missing)
     explanation = (
-        f"You're already strong in {len(strong)} of {total} skills {role.name} needs. "
+        f"You're already strong in {len(strong)} of {total} skills needed for {role_name}. "
         f"{len(developing)} are developing, and {len(missing)} are still missing."
         if total
-        else f"No required skills are configured for {role.name}."
+        else f"No required skills were found for {role_name}."
     )
+    
     return SkillGapResult(
-        role_id=role.id,
-        role_name=role.name,
+        role_id=f"dynamic.{role_name.lower().replace(' ', '_')}",
+        role_name=role_name,
         strong=strong,
         developing=developing,
         missing=missing,

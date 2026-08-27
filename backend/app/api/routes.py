@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.api import ConversationResponse, MessageRequest
+from app.schemas.api import ChatRequest, ChatResponse, ConversationResponse, MessageRequest
+from app.schemas.research import FeedbackPayload
 from app.services import conversation_service
+from app.services.assistant_service import handle_chat
 from app.services.conversation_service import SessionNotFoundError
+from app.services.feedback_service import process_feedback
 
 router = APIRouter()
 
@@ -106,3 +109,22 @@ def get_dashboard(session_id: str) -> dict:
     if dashboard is None:
         raise HTTPException(status_code=404, detail="Dashboard not available yet for this session.")
     return dashboard
+
+
+@router.post("/chat/{session_id}", response_model=ChatResponse)
+def chat_with_assistant(session_id: str, request: ChatRequest) -> ChatResponse:
+    try:
+        reply = handle_chat(session_id, request.message, request.context_step_id)
+        return ChatResponse(reply=reply)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/learning-path/{session_id}/steps/{step_id}/feedback")
+def submit_feedback(session_id: str, step_id: str, feedback: FeedbackPayload) -> dict:
+    try:
+        return process_feedback(session_id, step_id, feedback)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))

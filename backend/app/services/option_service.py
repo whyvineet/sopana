@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.knowledge.repository import Role, get_repository
+from app.schemas.research import RoleResearch, SkillRequirement
 
 
 @dataclass
@@ -23,20 +23,18 @@ def _slugify(label: str) -> str:
     return "_".join(cleaned.split())
 
 
-def role_options(roles: list[Role] | None = None) -> list[OptionItem]:
-    repo = get_repository()
-    source = roles if roles is not None else repo.all_roles()
-    items = [OptionItem(id=role.id, label=role.name) for role in source]
-    items.append(OptionItem(id="role.not_sure", label="Not sure"))
-    return items
+def domain_options(research: RoleResearch | None = None) -> list[OptionItem]:
+    domains = research.specializations if research and research.specializations else [
+        "Web Development",
+        "Data Science",
+        "Systems Engineering",
+        "Cloud Architecture",
+    ]
+    return [OptionItem(id=f"domain.{_slugify(name)}", label=name) for name in domains]
 
 
-def domain_options(role: Role) -> list[OptionItem]:
-    return [OptionItem(id=f"domain.{_slugify(name)}", label=name) for name in role.domains]
-
-
-def experience_options(role: Role) -> list[OptionItem]:
-    values = role.experience_options or [
+def experience_options() -> list[OptionItem]:
+    values = [
         "None",
         "Beginner projects",
         "Academic projects",
@@ -45,8 +43,8 @@ def experience_options(role: Role) -> list[OptionItem]:
     return [OptionItem(id=f"experience.{_slugify(name)}", label=name) for name in values]
 
 
-def objective_options(role: Role) -> list[OptionItem]:
-    values = role.learning_objective_options or [
+def objective_options() -> list[OptionItem]:
+    values = [
         "Build fundamentals",
         "Get job-ready",
         "Build projects",
@@ -55,16 +53,19 @@ def objective_options(role: Role) -> list[OptionItem]:
     return [OptionItem(id=f"objective.{_slugify(name)}", label=name) for name in values]
 
 
-def skill_options(role: Role) -> list[OptionItem]:
-    repo = get_repository()
+def skill_options(requirements: list[SkillRequirement] | None = None) -> list[OptionItem]:
     items: list[OptionItem] = []
     seen: set[str] = set()
-    for req in role.required_skills:
-        skill = repo.get_skill(req.skill_id)
-        if not skill or skill.id in seen:
-            continue
-        items.append(OptionItem(id=skill.id, label=skill.name))
-        seen.add(skill.id)
+    
+    if requirements:
+        for req in requirements:
+            skill_name = req.skill.strip()
+            skill_id = f"dynamic.{_slugify(skill_name)}"
+            if skill_id in seen:
+                continue
+            items.append(OptionItem(id=skill_id, label=skill_name))
+            seen.add(skill_id)
+            
     items.append(OptionItem(id="skill.none_yet", label="None yet"))
     return items
 

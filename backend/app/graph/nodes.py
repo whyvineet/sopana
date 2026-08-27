@@ -5,36 +5,26 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage
 
-from app.graph.extract import extract_learner_details, infer_role_family
+from app.graph.extract import extract_learner_details
 from app.graph.state import LearningState, StageName
 from app.integrations.llm.openrouter import LLMConfigurationError
-from app.knowledge.repository import get_repository
-from app.services.learning_path_service import generate_learning_path
 from app.services.option_service import (
     OptionItem,
-    domain_options,
     experience_options,
     objective_options,
-    proficiency_options,
-    role_options,
-    skill_options,
     to_api_options,
 )
-from app.services.skill_gap_service import compute_skill_gap
 
 logger = logging.getLogger(__name__)
 
 STAGE_ORDER: list[StageName] = [
     "goal",
-    "domain_discovery",
     "experience",
     "skill_discovery",
-    "skill_proficiency",
     "learning_interests",
     "objectives",
 ]
 
-LEVELS = ["none", "beginner", "basic", "intermediate", "advanced", "expert"]
 EXPERIENCE_ALIASES = {
     "none": "none",
     "no_hands_on_experience": "none",
@@ -65,16 +55,12 @@ def _last_user_text(state: LearningState) -> str:
 
 def _missing(state: LearningState) -> list[str]:
     missing: list[str] = []
-    if not state.get("matched_role_id"):
+    if not state.get("target_role"):
         missing.append("role")
-    if not state.get("selected_domain_ids"):
-        missing.append("domains")
     if not state.get("experience_level"):
         missing.append("experience")
     if not state.get("selected_skill_ids") and state.get("experience_level") != "none":
         missing.append("skills")
-    if state.get("pending_proficiency_skill_ids"):
-        missing.append("proficiency")
     if not state.get("specific_interest"):
         missing.append("interests")
     if not state.get("learning_objectives"):
@@ -87,10 +73,6 @@ def _progress(stage: StageName) -> tuple[int, int]:
     return index + 1, len(STAGE_ORDER)
 
 
-def _role(state: LearningState):
-    return get_repository().get_role(state.get("matched_role_id"))
-
-
 def _normalize_experience(value: str) -> str | None:
     key = value.strip().lower().replace("-", "_").replace(" ", "_").replace("/", "_")
     key = "_".join(part for part in key.split("_") if part)
@@ -99,15 +81,6 @@ def _normalize_experience(value: str) -> str | None:
     for alias, mapped in EXPERIENCE_ALIASES.items():
         if alias in key:
             return mapped
-    return None
-
-
-def _normalize_level(value: str | None) -> str | None:
-    if not value:
-        return None
-    v = value.strip().lower()
-    if v in LEVELS:
-        return v
     return None
 
 
@@ -128,13 +101,14 @@ def _match_options(text: str, options: list[OptionItem]) -> list[OptionItem]:
     return matched
 
 
-def _upsert_skill(skills: list[dict[str, Any]], skill_id: str, name: str, level: str | None, source: str) -> None:
+def _upsert_skill(skills: list[dict[str, Any]], skill_name: str, level: str | None, source: str) -> None:
+    skill_id = f"dynamic.{skill_name.lower().replace(' ', '_')}"
     for index, item in enumerate(skills):
-        if item.get("skill_id") == skill_id:
+        if item.get("skill_id") == skill_id or item.get("name") == skill_name:
             next_level = level or item.get("level") or "beginner"
             skills[index] = {
                 "skill_id": skill_id,
-                "name": name,
+                "name": skill_name,
                 "level": next_level,
                 "source": source,
             }
@@ -142,7 +116,7 @@ def _upsert_skill(skills: list[dict[str, Any]], skill_id: str, name: str, level:
     skills.append(
         {
             "skill_id": skill_id,
-            "name": name,
+            "name": skill_name,
             "level": level or "beginner",
             "source": source,
         }
@@ -150,10 +124,8 @@ def _upsert_skill(skills: list[dict[str, Any]], skill_id: str, name: str, level:
 
 
 def _apply_extraction(state: LearningState, text: str) -> dict[str, Any]:
-    repo = get_repository()
     parsed = extract_learner_details(text)
     updates: dict[str, Any] = {}
-
 
     if parsed.goal_summary:
         updates["goal"] = parsed.goal_summary
@@ -162,53 +134,19 @@ def _apply_extraction(state: LearningState, text: str) -> dict[str, Any]:
         updates["goal"] = text
         updates["goal_summary"] = text
 
-    role = repo.find_role_by_name(parsed.target_role or "")
-    text_l = text.lower()
-    specific_role_words = any(
-        word in text_l for word in ("engineer", "scientist", "developer", "analyst", "actor", "acting")
-    )
-    if (
-        role
-        and parsed.role_confidence == "high"
-        and specific_role_words
-        and not state.get("matched_role_id")
-    ):
-        updates["target_role"] = role.name
-        updates["matched_role_id"] = role.id
+    if parsed.target_role and not state.get("target_role"):
+        updates["target_role"] = parsed.target_role
 
     if parsed.experience_level and not state.get("experience_level"):
         updates["experience_level"] = parsed.experience_level
 
-    selected_domains = list(state.get("selected_domains", []))
-    selected_domain_ids = list(state.get("selected_domain_ids", []))
-    role_obj = repo.get_role(updates.get("matched_role_id") or state.get("matched_role_id"))
-    if role_obj:
-        for name in parsed.domains:
-            for option in domain_options(role_obj):
-                if (name.lower() in option.label.lower() or option.label.lower() in name.lower()) and (option.id not in selected_domain_ids):
-                        selected_domain_ids.append(option.id)
-                        selected_domains.append(option.label)
-    if selected_domain_ids:
-        updates["selected_domains"] = selected_domains
-        updates["selected_domain_ids"] = selected_domain_ids
-        updates["interests"] = list(dict.fromkeys([*state.get("interests", []), *selected_domains]))
-
     skill_payload = list(state.get("skills", []))
-    pending = list(state.get("pending_proficiency_skill_ids", []))
     for mention in parsed.skills:
-        skill = repo.find_skill_by_name(mention.skill_name)
-        if not skill:
-            continue
-        level = _normalize_level(mention.level)
-        _upsert_skill(skill_payload, skill.id, skill.name, level, "nlp_inference")
-        if level is None and skill.id not in pending:
-            pending.append(skill.id)
-        if level and skill.id in pending:
-            pending.remove(skill.id)
+        _upsert_skill(skill_payload, mention.skill_name, mention.level, "nlp_inference")
+        
     if skill_payload:
         updates["skills"] = skill_payload
         updates["selected_skill_ids"] = [item["skill_id"] for item in skill_payload]
-        updates["pending_proficiency_skill_ids"] = pending
 
     interests = list(state.get("interests", []))
     if parsed.interests:
@@ -225,36 +163,11 @@ def _apply_extraction(state: LearningState, text: str) -> dict[str, Any]:
 
 
 def _apply_option_text(state: LearningState, text: str) -> dict[str, Any]:
-    repo = get_repository()
     updates: dict[str, Any] = {}
     stage = state.get("current_stage", "goal")
 
-    if stage == "goal":
-        matched = _match_options(text, role_options())
-        if matched and matched[0].id != "role.not_sure":
-            role = repo.get_role(matched[0].id) or repo.find_role_by_name(matched[0].label)
-            if role:
-                updates["target_role"] = role.name
-                updates["matched_role_id"] = role.id
-                updates["goal"] = state.get("goal") or f"Become a {role.name}"
-                updates["goal_summary"] = state.get("goal_summary") or updates["goal"]
-
-    role = repo.get_role(updates.get("matched_role_id") or state.get("matched_role_id"))
-    if role and stage == "domain_discovery":
-        matched = _match_options(text, domain_options(role))
-        domain_ids = list(state.get("selected_domain_ids", []))
-        domains = list(state.get("selected_domains", []))
-        for option in matched:
-            if option.id not in domain_ids:
-                domain_ids.append(option.id)
-                domains.append(option.label)
-        if domain_ids:
-            updates["selected_domain_ids"] = domain_ids
-            updates["selected_domains"] = domains
-            updates["interests"] = list(dict.fromkeys([*state.get("interests", []), *domains]))
-
-    if role and stage == "experience":
-        matched = _match_options(text, experience_options(role))
+    if stage == "experience":
+        matched = _match_options(text, experience_options())
         if matched:
             updates["experience_level"] = _normalize_experience(matched[0].label) or _normalize_experience(
                 matched[0].id.split("experience.", 1)[-1]
@@ -262,73 +175,27 @@ def _apply_option_text(state: LearningState, text: str) -> dict[str, Any]:
         elif _normalize_experience(text):
             updates["experience_level"] = _normalize_experience(text)
 
-    if role and stage == "skill_discovery":
-        options = skill_options(role)
-        matched = _match_options(text, options)
+    if stage == "skill_discovery":
         skill_payload = list(state.get("skills", []))
-        pending = list(state.get("pending_proficiency_skill_ids", []))
-        if any(option.id == "skill.none_yet" for option in matched) or text.lower() in {
-            "none",
-            "none yet",
-            "no",
-            "nope",
-        }:
+        if text.lower() in {"none", "none yet", "no", "nope"}:
             updates["selected_skill_ids"] = ["skill.none_yet"]
             updates["skills"] = skill_payload
-            updates["pending_proficiency_skill_ids"] = []
-            updates["current_proficiency_skill_id"] = None
-        else:
-            for option in matched:
-                if option.id == "skill.none_yet":
-                    continue
-                skill = repo.get_skill(option.id)
-                if not skill:
-                    continue
-                existing = next((item for item in skill_payload if item["skill_id"] == skill.id), None)
-                if existing is None:
-                    _upsert_skill(skill_payload, skill.id, skill.name, None, "selection")
-                    if skill.id not in pending:
-                        pending.append(skill.id)
+        elif text:
+            parts = [p.strip() for p in text.split(",")]
+            for part in parts:
+                if part:
+                    _upsert_skill(skill_payload, part, None, "selection")
             updates["skills"] = skill_payload
             updates["selected_skill_ids"] = [item["skill_id"] for item in skill_payload]
-            updates["pending_proficiency_skill_ids"] = pending
-
-    if stage == "skill_proficiency":
-        current_id = state.get("current_proficiency_skill_id") or (
-            state.get("pending_proficiency_skill_ids") or [None]
-        )[0]
-        selected_level = _normalize_level(text)
-        if selected_level is None:
-            for level in LEVELS:
-                if level in text.lower():
-                    selected_level = None if level == "none" else level
-                    if level == "none":
-                        selected_level = "beginner"
-                    break
-            if "never practiced" in text.lower():
-                selected_level = "beginner"
-        if selected_level and current_id:
-            skill_payload = list(state.get("skills", []))
-            skill = repo.get_skill(current_id)
-            _upsert_skill(
-                skill_payload,
-                current_id,
-                skill.name if skill else current_id,
-                selected_level,
-                "confirmed",
-            )
-            pending = [sid for sid in state.get("pending_proficiency_skill_ids", []) if sid != current_id]
-            updates["skills"] = skill_payload
-            updates["pending_proficiency_skill_ids"] = pending
-            updates["current_proficiency_skill_id"] = pending[0] if pending else None
 
     if stage == "learning_interests" and text:
-        interests = list(dict.fromkeys([*state.get("interests", []), text]))
-        updates["interests"] = interests
+        if text.lower() not in {"none", "no", "nope"}:
+            interests = list(dict.fromkeys([*state.get("interests", []), text]))
+            updates["interests"] = interests
         updates["specific_interest"] = True
 
-    if stage == "objectives" and text and role:
-        matched = _match_options(text, objective_options(role))
+    if stage == "objectives" and text:
+        matched = _match_options(text, objective_options())
         labels = [option.label for option in matched] or [text]
         updates["learning_objectives"] = list(dict.fromkeys([*state.get("learning_objectives", []), *labels]))
 
@@ -352,102 +219,54 @@ def _profile_summary(state: LearningState) -> str:
     return (
         "Thanks. I have enough information to build your profile.\n\n"
         f"Goal: {state.get('goal_summary') or state.get('goal') or 'Not specified'}\n"
-        f"Target: {state.get('target_role') or 'Not specified'}\n"
+        f"Target Role: {state.get('target_role') or 'Not specified'}\n"
         f"Experience: {state.get('experience_level') or 'Not specified'}\n"
         f"Skills: {skill_lines}\n"
         f"Interest: {', '.join(interests) if interests else 'Not specified'}\n"
         f"Objective: {', '.join(objectives) if objectives else 'Not specified'}\n\n"
-        "Now I'll identify your skill gaps and build your personalized path."
-    )
-
-
-def _format_gap(gap: dict[str, Any]) -> str:
-    def names(items: list[dict[str, Any]]) -> str:
-        return ", ".join(item.get("skill_name", "") for item in items) or "None"
-
-    return (
-        "Skill gap\n"
-        f"Strong: {names(gap.get('strong') or [])}\n"
-        f"Developing: {names(gap.get('developing') or [])}\n"
-        f"Missing: {names(gap.get('missing') or [])}"
+        "Now I'll build your personalized learning path."
     )
 
 
 def _prompt(state: LearningState) -> dict[str, Any]:
-    role = _role(state)
     missing = _missing(state)
 
     if "role" in missing:
-        family = infer_role_family(" ".join(filter(None, [state.get("goal") or "", _last_user_text(state)])))
-        roles = get_repository().roles_in_family(family) if family else get_repository().all_roles()
-        if not roles:
-            roles = get_repository().all_roles()
         current, total = _progress("goal")
         return {
             "current_stage": "goal",
-            "last_reply": "Which direction fits you best?",
-            "input_type": "single_select",
+            "last_reply": "What do you want to learn or become? (e.g. 'I want to become an AI engineer in healthcare')",
+            "input_type": "text",
             "allow_custom_input": True,
-            "options": to_api_options(role_options(roles)),
+            "options": [],
             "progress_current": current,
             "progress_total": total,
             "missing_information": missing,
             "error": None,
         }
 
-    if "domains" in missing and role:
-        current, total = _progress("domain_discovery")
-        return {
-            "current_stage": "domain_discovery",
-            "last_reply": f"Got it — you're aiming to become an {role.name}. Which direction interests you?",
-            "input_type": "single_select",
-            "allow_custom_input": True,
-            "options": to_api_options(domain_options(role)),
-            "progress_current": current,
-            "progress_total": total,
-            "missing_information": missing,
-            "error": None,
-        }
-
-    if "experience" in missing and role:
+    if "experience" in missing:
         current, total = _progress("experience")
         return {
             "current_stage": "experience",
             "last_reply": "What experience do you have?",
             "input_type": "single_select",
             "allow_custom_input": True,
-            "options": to_api_options(experience_options(role)),
+            "options": to_api_options(experience_options()),
             "progress_current": current,
             "progress_total": total,
             "missing_information": missing,
             "error": None,
         }
 
-    if "skills" in missing and role:
+    if "skills" in missing:
         current, total = _progress("skill_discovery")
         return {
             "current_stage": "skill_discovery",
-            "last_reply": "Which of these have you explored?",
-            "input_type": "multi_select",
+            "last_reply": "What relevant skills do you already have? (Enter comma separated)",
+            "input_type": "text",
             "allow_custom_input": True,
-            "options": to_api_options(skill_options(role)),
-            "progress_current": current,
-            "progress_total": total,
-            "missing_information": missing,
-            "error": None,
-        }
-
-    if "proficiency" in missing:
-        pending = list(state.get("pending_proficiency_skill_ids") or [])
-        skill = get_repository().get_skill(pending[0]) if pending else None
-        current, total = _progress("skill_proficiency")
-        return {
-            "current_stage": "skill_proficiency",
-            "current_proficiency_skill_id": pending[0] if pending else None,
-            "last_reply": f"How comfortable are you with {skill.name if skill else 'this skill'}?",
-            "input_type": "single_select",
-            "allow_custom_input": True,
-            "options": to_api_options(proficiency_options(pending[0])) if pending else [],
+            "options": [{"id": "skill.none_yet", "label": "None yet"}],
             "progress_current": current,
             "progress_total": total,
             "missing_information": missing,
@@ -458,7 +277,7 @@ def _prompt(state: LearningState) -> dict[str, Any]:
         current, total = _progress("learning_interests")
         return {
             "current_stage": "learning_interests",
-            "last_reply": "Any specific learning interests?",
+            "last_reply": "Any specific learning interests? (e.g. prefer videos, project-based)",
             "input_type": "text",
             "allow_custom_input": True,
             "options": [],
@@ -468,14 +287,14 @@ def _prompt(state: LearningState) -> dict[str, Any]:
             "error": None,
         }
 
-    if "objectives" in missing and role:
+    if "objectives" in missing:
         current, total = _progress("objectives")
         return {
             "current_stage": "objectives",
             "last_reply": "What is your main objective?",
             "input_type": "single_select",
             "allow_custom_input": True,
-            "options": to_api_options(objective_options(role)),
+            "options": to_api_options(objective_options()),
             "progress_current": current,
             "progress_total": total,
             "missing_information": missing,
@@ -483,10 +302,25 @@ def _prompt(state: LearningState) -> dict[str, Any]:
         }
 
     current, total = _progress("objectives")
+    
+    if state.get("research_status") == "idle":
+        return {
+            "current_stage": "profile_review",
+            "profile_complete": True,
+            "last_reply": _profile_summary(state) + "\n\nResearching skills and resources for you... This may take a minute.",
+            "input_type": "complete",
+            "allow_custom_input": False,
+            "options": [],
+            "progress_current": current,
+            "progress_total": total,
+            "missing_information": [],
+            "error": None,
+        }
+        
     return {
-        "current_stage": "profile_review",
+        "current_stage": "complete",
         "profile_complete": True,
-        "last_reply": _profile_summary(state),
+        "last_reply": "Your personalized learning path is ready.",
         "input_type": "complete",
         "allow_custom_input": False,
         "options": [],
@@ -501,7 +335,7 @@ def conversation_node(state: LearningState) -> dict[str, Any]:
     if state.get("profile_complete") or state.get("current_stage") in {"profile_review", "complete"}:
         if not state.get("profile_complete"):
             return {**_prompt(state), "profile_complete": True}
-        return {"profile_complete": True, "current_stage": "profile_review"}
+        return {"profile_complete": True}
 
     text = _last_user_text(state)
     if not text:
@@ -522,7 +356,7 @@ def conversation_node(state: LearningState) -> dict[str, Any]:
         option_updates = _apply_option_text(state, text)
         after_options = _merged(state, option_updates)
         needs_llm = not option_updates or (
-            after_options.get("current_stage") == "goal" and not after_options.get("matched_role_id")
+            after_options.get("current_stage") == "goal" and not after_options.get("target_role")
         )
         
         options = state.get("options") or []
@@ -533,9 +367,11 @@ def conversation_node(state: LearningState) -> dict[str, Any]:
         extraction_updates: dict[str, Any] = {}
         if not exact_option or needs_llm:
             extraction_updates = _apply_extraction(after_options, text)
+        
+        if after_options.get("current_stage") == "goal" and not extraction_updates.get("target_role") and not after_options.get("target_role"):
+            extraction_updates["target_role"] = text.strip()
+            
         merged = _merged(after_options, extraction_updates)
-        if merged.get("experience_level") == "none" and not merged.get("skills"):
-            merged["pending_proficiency_skill_ids"] = []
         prompt = _prompt(merged)
         result = {key: value for key, value in merged.items() if key != "messages"}
         result.update(prompt)
@@ -566,6 +402,7 @@ def skill_gap_node(state: LearningState) -> dict[str, Any]:
             "error": "Could not match a known role to compute a skill gap.",
             "current_stage": "complete",
         }
+    from app.services.skill_gap_service import compute_skill_gap
     result = compute_skill_gap(role_id=role_id, learner_skills=state.get("skills") or [])
     return {
         "skill_gap": result.model_dump(),
@@ -581,6 +418,7 @@ def generate_learning_path_node(state: LearningState) -> dict[str, Any]:
             "last_reply": state.get("last_reply") or "I could not generate a learning path yet.",
         }
     from app.schemas.path import SkillGapResult
+    from app.services.learning_path_service import generate_learning_path
 
     gap = SkillGapResult.model_validate(gap_data)
     path = generate_learning_path(
@@ -593,7 +431,7 @@ def generate_learning_path_node(state: LearningState) -> dict[str, Any]:
         "learning_path": path.model_dump(),
         "current_stage": "complete",
         "profile_complete": True,
-        "last_reply": f"{reply}\n\n{_format_gap(gap_data)}\n\nYour personalized learning path is ready.",
+        "last_reply": f"{reply}\n\nYour personalized learning path is ready.",
         "input_type": "complete",
         "allow_custom_input": False,
         "options": [],

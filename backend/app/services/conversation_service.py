@@ -50,8 +50,6 @@ def _build_dashboard(state: LearningState) -> dict[str, Any] | None:
     if not learning_path:
         return None
 
-    repo = get_repository()
-
     steps = learning_path.get("steps") or []
     current_focus_step_id = learning_path.get("current_focus_step_id")
     current_index = 0
@@ -73,15 +71,14 @@ def _build_dashboard(state: LearningState) -> dict[str, Any] | None:
     for step in steps:
         if not isinstance(step, dict) or not step.get("completed"):
             continue
-        for skill_id in step.get("skills") or []:
-            skill = repo.get_skill(skill_id)
-            completed_step_skills.append(skill.name if skill else skill_id)
+        for skill_name in step.get("skills") or []:
+            completed_step_skills.append(skill_name)
 
     if not strong_skills and not completed_step_skills:
         completed_step_skills = [
-            item.get("name")
+            item.get("name") or item.get("label") or item.get("skill")
             for item in state.get("skills", [])
-            if isinstance(item, dict) and item.get("name")
+            if isinstance(item, dict) and (item.get("name") or item.get("label") or item.get("skill"))
         ]
 
     developed_skills = list(dict.fromkeys([*strong_skills, *completed_step_skills]))

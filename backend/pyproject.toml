@@ -7,8 +7,13 @@ dependencies = [
     "httpx>=0.28.1",
     "langchain-core>=1.6.0",
     "langchain-openai>=1.6.0",
+    "langchain-community>=0.3.0",
     "langgraph>=1.2.11",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.15.0",
     "python-dotenv>=1.2.3",
+    "supabase>=2.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "tavily-python>=0.5.0",
+    "duckduckgo-search>=8.0.0",
 ]
