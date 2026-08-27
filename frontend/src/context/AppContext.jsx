@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
+import { createContext, useContext, useEffect, useReducer } from 'react'
 import { useAuth } from '@/context/AuthContext'
 
 const STORAGE_KEY = 'sopana_session'
@@ -174,8 +174,3 @@ export function useAppDispatch() {
   return ctx
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
-export function useJourneyProgress() {
-  const { stage } = useAppState()
-  return useMemo(() => stage ?? { index: 0, total: 1, label: '' }, [stage])
-}

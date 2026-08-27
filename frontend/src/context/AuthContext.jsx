@@ -1,18 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {
   clearTokens,
-  completeOnboarding as apiCompleteOnboarding,
   getAccessToken,
   getUserProfile,
   loadStoredProfile,
   loadStoredUser,
   loginWithEmail as apiLoginWithEmail,
   logout as apiLogout,
-  refreshAccessToken,
   resetPassword as apiResetPassword,
-  saveApplicationState as apiSaveApplicationState,
   signupWithEmail as apiSignupWithEmail,
-  updateOnboardingStep as apiUpdateOnboardingStep,
 } from '@/services/auth'
 
 const AuthContext = createContext(null)
@@ -26,13 +22,13 @@ export function AuthProvider({ children }) {
   // On mount: if a token exists, validate it and rehydrate user/profile
   useEffect(() => {
     if (!getAccessToken()) {
-      setLoading(false)
       return
     }
 
     // Optimistically restore from localStorage while the network request flies
     const storedUser = loadStoredUser()
     const storedProfile = loadStoredProfile()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (storedUser) setUser(storedUser)
     if (storedProfile) setProfile(storedProfile)
 
