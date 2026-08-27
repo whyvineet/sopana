@@ -8,7 +8,6 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from app.core.session_store import get_session_store
 from app.graph.build import get_graph
 from app.graph.state import LearningState, initial_state
-from app.knowledge.repository import get_repository
 
 
 class SessionNotFoundError(Exception):
