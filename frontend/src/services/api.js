@@ -3,33 +3,21 @@ const REQUEST_TIMEOUT_MS = 120000
 
 const STAGE_ORDER = [
   'goal',
-  'role_confirmation',
-  'domain_discovery',
   'experience',
   'skill_discovery',
-  'skill_proficiency',
   'learning_interests',
   'objectives',
   'profile_review',
-  'build_profile',
-  'skill_gap',
-  'generate_learning_path',
   'complete',
 ]
 
 const STAGE_LABELS = {
   goal: 'Understanding your goal',
-  role_confirmation: 'Role confirmation',
-  domain_discovery: 'Domain discovery',
   experience: 'Experience discovery',
   skill_discovery: 'Skill discovery',
-  skill_proficiency: 'Skill proficiency',
   learning_interests: 'Learning interests',
   objectives: 'Learning objectives',
   profile_review: 'Profile review',
-  build_profile: 'Building your profile',
-  skill_gap: 'Computing your skill gap',
-  generate_learning_path: 'Generating your learning path',
   complete: 'Complete',
 }
 

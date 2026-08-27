@@ -17,10 +17,6 @@ export function getAccessToken() {
   return localStorage.getItem('access_token')
 }
 
-export function getRefreshToken() {
-  return localStorage.getItem('refresh_token')
-}
-
 function storeTokens({ access_token, refresh_token }) {
   localStorage.setItem('access_token', access_token)
   localStorage.setItem('refresh_token', refresh_token)
@@ -147,8 +143,8 @@ export async function resetPassword(email) {
  * Refresh the access token using the stored refresh token.
  * @returns {boolean} true if successful, false if refresh token is invalid.
  */
-export async function refreshAccessToken() {
-  const refresh_token = getRefreshToken()
+async function refreshAccessToken() {
+  const refresh_token = localStorage.getItem('refresh_token')
   if (!refresh_token) return false
   try {
     const data = await request('/api/v1/auth/refresh', {
@@ -167,7 +163,7 @@ export async function refreshAccessToken() {
  * Log out — clears tokens locally and invalidates the server session.
  */
 export async function logout() {
-  const refresh_token = getRefreshToken()
+  const refresh_token = localStorage.getItem('refresh_token')
   clearTokens()
   if (refresh_token) {
     // Best-effort — don't throw if this fails
