@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
-const REQUEST_TIMEOUT_MS = 15000
+const REQUEST_TIMEOUT_MS = 120000
 
 const STAGE_ORDER = [
   'goal',
@@ -293,5 +293,27 @@ export const api = {
       }),
     })
     return normalizeConversationResponse(raw)
+  },
+
+  async sendChatMessage(sessionId, message, contextStepId = null) {
+    return request(`/api/v1/chat/${sessionId}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        context_step_id: contextStepId,
+      }),
+    })
+  },
+
+  async submitFeedback(sessionId, stepId, confidence, assessmentScore = null, timeSpentMinutes = null, notes = null) {
+    return request(`/api/v1/learning-path/${sessionId}/steps/${stepId}/feedback`, {
+      method: 'POST',
+      body: JSON.stringify({
+        confidence,
+        assessment_score: assessmentScore,
+        time_spent_minutes: timeSpentMinutes,
+        notes,
+      }),
+    })
   },
 }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api, ApiError } from '@/services/api'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
-import { completeOnboarding, saveApplicationState, updateOnboardingStep } from '@/services/firebase'
+import { completeOnboarding, saveApplicationState, updateOnboardingStep } from '@/services/auth'
 
 const ONBOARDING_STEPS = ['profile', 'skills', 'interests', 'preferences', 'goal', 'assessment', 'roadmap']
 

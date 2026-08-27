@@ -14,6 +14,7 @@ const initialState = {
   learningPath: null,
   dashboard: null,
   conversationComplete: false,
+  sessionHistory: [], // Array of { sessionId, title, timestamp }
 }
 
 function loadPersisted() {
@@ -40,10 +41,18 @@ function reducer(state, action) {
     case 'HYDRATE':
       return { ...state, ...action.payload }
     case 'RESET_JOURNEY':
-      return initialState
+      return { ...initialState, sessionHistory: action.payload?.sessionHistory || state.sessionHistory }
     case 'START_CONVERSATION':
       return {
         ...initialState,
+        sessionHistory: [
+          ...(state.sessionHistory || []),
+          {
+            sessionId: action.payload.sessionId,
+            title: 'New Learning Path',
+            timestamp: Date.now(),
+          },
+        ],
         sessionId: action.payload.sessionId,
         stage: action.payload.stage,
         messages: [
@@ -95,6 +104,11 @@ function reducer(state, action) {
               { id: crypto.randomUUID(), role: 'ai', text: message, inputType, options, allowCustomInput },
             ]
           : state.messages,
+        sessionHistory: state.sessionHistory?.map((s) =>
+          s.sessionId === state.sessionId && profile?.target
+            ? { ...s, title: profile.target }
+            : s
+        ) || state.sessionHistory,
       }
     }
     case 'RESET':
@@ -115,8 +129,22 @@ export function AppProvider({ children }) {
   const { user, profile, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    if (!authLoading && user && profile?.appState) {
-      dispatch({ type: 'HYDRATE', payload: profile.appState })
+    if (!authLoading && user && profile?.app_state) {
+      const p = profile.app_state
+      const camelCasePayload = {
+        sessionId: p.session_id,
+        messages: p.messages || [],
+        stage: p.stage,
+        answers: p.answers || [],
+        learnerProfile: p.learner_profile,
+        missingInformation: p.missing_information || [],
+        skillGap: p.skill_gap,
+        learningPath: p.learning_path,
+        dashboard: p.dashboard,
+        conversationComplete: p.conversation_complete,
+        sessionHistory: p.session_history || []
+      }
+      dispatch({ type: 'HYDRATE', payload: camelCasePayload })
     }
     if (!user && !authLoading) dispatch({ type: 'RESET' })
   }, [authLoading, profile, user])

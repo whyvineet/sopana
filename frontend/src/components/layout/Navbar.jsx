@@ -1,6 +1,8 @@
-import { NavLink } from 'react-router-dom'
-import { useAppDispatch } from '@/context/AppContext'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAppDispatch, useAppState } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
+import { api } from '@/services/api'
+import { saveApplicationState } from '@/services/auth'
 
 const LINKS = [
   { to: '/journey', label: 'Journey' },
@@ -9,8 +11,43 @@ const LINKS = [
 ]
 
 export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, logout, user } = useAuth()
   const dispatch = useAppDispatch()
+  const appState = useAppState()
+  const navigate = useNavigate()
+
+  const handleSessionSwitch = async (e) => {
+    const newSessionId = e.target.value
+    if (!newSessionId || newSessionId === appState.sessionId) return
+
+    try {
+      const response = await api.getConversation(newSessionId)
+      dispatch({
+        type: 'HYDRATE',
+        payload: {
+          sessionId: response.sessionId,
+          stage: response.stage,
+          messages: response.messages?.length
+            ? response.messages
+            : response.message
+              ? [{ id: crypto.randomUUID(), role: 'ai', text: response.message, inputType: response.inputType, options: response.options }]
+              : [],
+          learnerProfile: response.profile,
+          missingInformation: response.missingInformation,
+          skillGap: response.skillGap,
+          learningPath: response.learningPath,
+          dashboard: response.dashboard,
+          conversationComplete: response.done,
+        },
+      })
+      if (user) {
+         await saveApplicationState(user.uid, { ...appState, sessionId: newSessionId }, { session_id: newSessionId })
+      }
+      navigate('/dashboard')
+    } catch (err) {
+      console.error('Failed to switch session', err)
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-100 bg-paper/90 backdrop-blur-sm">
@@ -26,26 +63,79 @@ export default function Navbar() {
         </NavLink>
 
         {isAuthenticated && (
-          <ul className="flex items-center gap-1">
-            {LINKS.map((link) => (
-              <li key={link.to}>
-                <NavLink
-                  to={link.to}
-                  className={({ isActive }) =>
-                    `rounded-full px-3.5 py-1.5 text-sm transition-colors ${
-                      isActive
-                        ? 'bg-gray-950 text-white'
-                        : 'text-gray-500 hover:text-gray-950'
-                    }`
-                  }
-                >
-                  {link.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-4">
+            <ul className="flex items-center gap-1">
+              {LINKS.map((link) => (
+                <li key={link.to}>
+                  <NavLink
+                    to={link.to}
+                    className={({ isActive }) =>
+                      `rounded-full px-3.5 py-1.5 text-sm transition-colors ${
+                        isActive
+                          ? 'bg-gray-950 text-white'
+                          : 'text-gray-500 hover:text-gray-950'
+                      }`
+                    }
+                  >
+                    {link.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+            {appState.sessionHistory && appState.sessionHistory.length > 0 && (
+              <select
+                value={appState.sessionId || ''}
+                onChange={handleSessionSwitch}
+                className="ml-2 rounded-md border-gray-300 py-1 pl-3 pr-8 text-sm focus:border-gray-900 focus:ring-gray-900"
+              >
+                <option value="" disabled>Select Journey</option>
+                {appState.sessionHistory.map((s) => (
+                  <option key={s.sessionId} value={s.sessionId}>
+                    {s.title || 'Learning Path'} ({new Date(s.timestamp).toLocaleDateString()})
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                const currentSessionId = appState.sessionId;
+                let currentHistory = appState.sessionHistory || [];
+                
+                if (currentSessionId && !currentHistory.find(s => s.sessionId === currentSessionId)) {
+                   currentHistory = [
+                     ...currentHistory,
+                     {
+                       sessionId: currentSessionId,
+                       title: appState.learnerProfile?.target || 'Learning Path',
+                       timestamp: Date.now()
+                     }
+                   ];
+                }
+                
+                dispatch({ type: 'RESET_JOURNEY', payload: { sessionHistory: currentHistory } })
+                if (user) {
+                  await saveApplicationState(user.uid, { ...appState, sessionHistory: currentHistory, sessionId: null }, { session_id: "" })
+                }
+                navigate('/start-onboarding')
+              }}
+              className="ml-2 rounded-full border border-gray-200 px-3.5 py-1.5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+            >
+              + New Journey
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await logout()
+                dispatch({ type: 'RESET' })
+                window.location.assign('/')
+              }}
+              className="ml-3 text-sm text-gray-500 hover:text-gray-950"
+            >
+              Log out
+            </button>
+          </div>
         )}
-        {isAuthenticated && <button type="button" onClick={async () => { await logout(); dispatch({ type: 'RESET' }); window.location.assign('/') }} className="ml-3 text-sm text-gray-500 hover:text-gray-950">Log out</button>}
       </nav>
     </header>
   )

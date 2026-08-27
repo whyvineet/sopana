@@ -44,7 +44,18 @@ export default function ResourcePanel({ step, onStart, onComplete, isActionLoadi
             {step.resources.map((resource) => (
               <li key={resource.id} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-400" />
-                {resource.title}
+                {resource.url ? (
+                  <a
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {resource.title}
+                  </a>
+                ) : (
+                  <span>{resource.title}</span>
+                )}
               </li>
             ))}
           </ul>

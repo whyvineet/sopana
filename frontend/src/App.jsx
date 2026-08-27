@@ -12,7 +12,7 @@ import Dashboard from '@/pages/Dashboard'
 import { useAuth } from '@/context/AuthContext'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
 import { api } from '@/services/api'
-import { saveApplicationState } from '@/services/firebase'
+import { saveApplicationState } from '@/services/auth'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth()

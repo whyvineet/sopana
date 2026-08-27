@@ -4,26 +4,29 @@ import Button from '@/components/shared/Button'
 import PageContainer from '@/components/layout/PageContainer'
 import { useAuth } from '@/context/AuthContext'
 
-function firebaseMessage(error) {
-  if (error?.message?.includes('client is offline')) {
-    return 'Could not connect to Firestore. Check your internet connection, Firestore database, and browser extensions, then try again.'
+function authMessage(error) {
+  // Map common error messages returned by the backend auth service
+  const msg = error?.message || ''
+  if (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('invalid email or password')) {
+    return 'The email or password is incorrect.'
   }
-  const messages = {
-    'auth/configuration-not-found': 'Email sign-up is not enabled for this Firebase project. Enable Email/Password in Firebase Console, then try again.',
-    'auth/invalid-credential': 'The email or password is incorrect.',
-    'auth/user-not-found': 'The email or password is incorrect.',
-    'auth/wrong-password': 'The email or password is incorrect.',
-    'auth/email-already-in-use': 'An account already exists for this email.',
-    'auth/weak-password': 'Use a password with at least six characters.',
-    'auth/invalid-email': 'Enter a valid email address.',
-    'auth/popup-closed-by-user': 'The Google sign-in window was closed.',
-    'auth/network-request-failed': 'Check your connection and try again.',
+  if (msg.toLowerCase().includes('user already registered') || msg.toLowerCase().includes('already in use')) {
+    return 'An account already exists for this email.'
   }
-  return messages[error.code] || error.message || 'Something went wrong. Please try again.'
+  if (msg.toLowerCase().includes('password should be at least')) {
+    return 'Use a password with at least 6 characters.'
+  }
+  if (msg.toLowerCase().includes('unable to validate email address')) {
+    return 'Enter a valid email address.'
+  }
+  if (msg.toLowerCase().includes('check your email')) {
+    return msg // Pass-through confirmation messages
+  }
+  return msg || 'Something went wrong. Please try again.'
 }
 
 export default function Login() {
-  const { login, signup, loginWithGoogle, resetPassword } = useAuth()
+  const { login, signup, resetPassword } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [mode, setMode] = useState('login')
@@ -55,20 +58,7 @@ export default function Login() {
         : await login(email.trim(), password)
       navigate(destinationFor(result.profile), { replace: true })
     } catch (authError) {
-      setError(firebaseMessage(authError))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  async function googleSignIn() {
-    setError('')
-    setIsLoading(true)
-    try {
-      const result = await loginWithGoogle()
-      navigate(destinationFor(result.profile), { replace: true })
-    } catch (authError) {
-      setError(firebaseMessage(authError))
+      setError(authMessage(authError))
     } finally {
       setIsLoading(false)
     }
@@ -82,7 +72,7 @@ export default function Login() {
       await resetPassword(email.trim())
       setMessage('Password reset email sent. Check your inbox.')
     } catch (authError) {
-      setError(firebaseMessage(authError))
+      setError(authMessage(authError))
     } finally {
       setIsLoading(false)
     }
@@ -108,7 +98,6 @@ export default function Login() {
         <Button type="submit" size="lg" className="w-full" disabled={isLoading}>{isLoading ? 'Please wait...' : mode === 'login' ? 'Log in' : 'Create account'}</Button>
       </form>
       {mode === 'login' && <button type="button" disabled={isLoading} className="mt-4 text-sm text-gray-500 underline-offset-4 hover:text-gray-950 hover:underline" onClick={forgotPassword}>Forgot password?</button>}
-      <Button type="button" variant="secondary" size="lg" className="mt-5 w-full" disabled={isLoading} onClick={googleSignIn}>Continue with Google</Button>
       <button type="button" className="mt-6 block text-sm text-gray-500 underline-offset-4 hover:text-gray-950 hover:underline" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setMessage('') }}>{mode === 'login' ? 'New to Sopana? Sign up' : 'Already have an account? Log in'}</button>
     </PageContainer>
   )

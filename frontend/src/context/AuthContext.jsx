@@ -1,75 +1,88 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { onAuthStateChanged } from 'firebase/auth'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {
-  auth,
-  configureAuthPersistence,
-  createUserProfile,
+  clearTokens,
+  completeOnboarding as apiCompleteOnboarding,
+  getAccessToken,
   getUserProfile,
-  loginWithEmail as signInWithEmail,
-  loginWithGoogle as signInWithGoogle,
-  logout as signOut,
-  resetPassword as sendResetEmail,
-  signupWithEmail,
-} from '@/services/firebase'
+  loadStoredProfile,
+  loadStoredUser,
+  loginWithEmail as apiLoginWithEmail,
+  logout as apiLogout,
+  refreshAccessToken,
+  resetPassword as apiResetPassword,
+  saveApplicationState as apiSaveApplicationState,
+  signupWithEmail as apiSignupWithEmail,
+  updateOnboardingStep as apiUpdateOnboardingStep,
+} from '@/services/auth'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(Boolean(auth))
+  // Start loading=true only if there's a stored token to validate
+  const [loading, setLoading] = useState(Boolean(getAccessToken()))
 
+  // On mount: if a token exists, validate it and rehydrate user/profile
   useEffect(() => {
-    if (!auth) {
-      return undefined
+    if (!getAccessToken()) {
+      setLoading(false)
+      return
     }
 
-    configureAuthPersistence().catch(() => {})
-    return onAuthStateChanged(auth, async (nextUser) => {
-      setUser(nextUser)
-      if (!nextUser) {
+    // Optimistically restore from localStorage while the network request flies
+    const storedUser = loadStoredUser()
+    const storedProfile = loadStoredProfile()
+    if (storedUser) setUser(storedUser)
+    if (storedProfile) setProfile(storedProfile)
+
+    getUserProfile()
+      .then((freshProfile) => {
+        if (freshProfile) {
+          setProfile(freshProfile)
+        } else {
+          // Token was invalid / expired and refresh failed
+          clearTokens()
+          setUser(null)
+          setProfile(null)
+        }
+      })
+      .catch(() => {
+        clearTokens()
+        setUser(null)
         setProfile(null)
-        setLoading(false)
-        return
-      }
-      try {
-        setProfile(await getUserProfile(nextUser.uid) || await createUserProfile(nextUser))
-      } catch (error) {
-        console.error('Could not load Firebase user profile:', error)
-        setProfile(null)
-      } finally {
-        setLoading(false)
-      }
-    })
+      })
+      .finally(() => setLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const signup = useCallback(async (name, email, password) => {
+    const result = await apiSignupWithEmail(name, email, password)
+    setUser(result.user)
+    setProfile(result.profile)
+    return result
   }, [])
 
-  async function signup(name, email, password) {
-    const result = await signupWithEmail(name, email, password)
+  const login = useCallback(async (email, password) => {
+    const result = await apiLoginWithEmail(email, password)
+    setUser(result.user)
     setProfile(result.profile)
     return result
-  }
+  }, [])
 
-  async function login(email, password) {
-    const result = await signInWithEmail(email, password)
-    setProfile(result.profile)
-    return result
-  }
-
-  async function loginWithGoogle() {
-    const result = await signInWithGoogle()
-    setProfile(result.profile)
-    return result
-  }
-
-  async function logout() {
-    await signOut()
+  const logout = useCallback(async () => {
+    await apiLogout()
     setUser(null)
     setProfile(null)
-  }
+  }, [])
 
-  async function resetPassword(email) {
-    return sendResetEmail(email)
-  }
+  const resetPassword = useCallback(async (email) => {
+    return apiResetPassword(email)
+  }, [])
+
+  const refreshProfile = useCallback(async () => {
+    const fresh = await getUserProfile()
+    if (fresh) setProfile(fresh)
+  }, [])
 
   return (
     <AuthContext.Provider
@@ -80,10 +93,9 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(user),
         signup,
         login,
-        loginWithGoogle,
         logout,
         resetPassword,
-        refreshProfile: async () => user && setProfile(await getUserProfile(user.uid)),
+        refreshProfile,
       }}
     >
       {children}

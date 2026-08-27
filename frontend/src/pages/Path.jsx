@@ -5,7 +5,7 @@ import LearningPath from '@/components/roadmap/LearningPath'
 import Button from '@/components/shared/Button'
 import { useAppDispatch, useAppState } from '@/context/AppContext'
 import { useAuth } from '@/context/AuthContext'
-import { saveApplicationState } from '@/services/firebase'
+import { saveApplicationState } from '@/services/auth'
 import { completeLearningStep, getLearningPath, startLearningStep } from '@/services/api'
 
 export default function Path() {
