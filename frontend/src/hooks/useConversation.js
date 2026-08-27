@@ -43,12 +43,19 @@ export function useConversation() {
   }, [dispatch, navigate, state, user])
 
   const send = useCallback(
-    async ({ text, optionIds, displayText }) => {
+    async ({ text, optionIds, displayText }, isRetry = false) => {
       setIsLoading(true)
       setError(null)
       setFailedPayload(null)
 
       const answer = { text: text ?? null, optionIds: optionIds ?? null }
+
+      if (!isRetry) {
+        dispatch({
+          type: 'ADD_USER_MESSAGE',
+          payload: { text: displayText, answer },
+        })
+      }
 
       try {
         const res = await api.sendMessage({
@@ -57,17 +64,20 @@ export function useConversation() {
           optionIds,
         })
 
-        dispatch({
-          type: 'ADD_USER_MESSAGE',
-          payload: { text: displayText, answer },
-        })
-
         dispatch({ type: 'ADD_AI_RESPONSE', payload: res })
+
+        let currentMessages = state.messages
+        if (!isRetry) {
+          currentMessages = [...currentMessages, { id: crypto.randomUUID(), role: 'user', text: displayText }]
+        }
 
         const nextState = {
           ...state,
           sessionId: state.sessionId,
-          messages: [...state.messages, { id: crypto.randomUUID(), role: 'user', text: displayText }, ...(res.message ? [{ id: crypto.randomUUID(), role: 'ai', text: res.message, inputType: res.inputType, options: res.options }] : [])],
+          messages: [
+            ...currentMessages,
+            ...(res.message ? [{ id: crypto.randomUUID(), role: 'ai', text: res.message, inputType: res.inputType, options: res.options }] : [])
+          ],
           stage: res.stage,
           learnerProfile: res.profile ?? state.learnerProfile,
           missingInformation: res.missingInformation ?? state.missingInformation,
@@ -104,7 +114,7 @@ export function useConversation() {
 
   const retryLast = useCallback(async () => {
     if (!failedPayload || isLoading) return
-    await send(failedPayload)
+    await send(failedPayload, true)
   }, [failedPayload, isLoading, send])
 
   return {
