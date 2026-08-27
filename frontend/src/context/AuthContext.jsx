@@ -9,6 +9,7 @@ import {
   logout as apiLogout,
   resetPassword as apiResetPassword,
   signupWithEmail as apiSignupWithEmail,
+  switchActiveSession as apiSwitchActiveSession,
 } from '@/services/auth'
 
 const AuthContext = createContext(null)
@@ -80,6 +81,11 @@ export function AuthProvider({ children }) {
     if (fresh) setProfile(fresh)
   }, [])
 
+  const switchSession = useCallback(async (sessionId) => {
+    const result = await apiSwitchActiveSession(sessionId)
+    if (result) setProfile(result)
+  }, [])
+
   return (
     <AuthContext.Provider
       value={{
@@ -92,6 +98,7 @@ export function AuthProvider({ children }) {
         logout,
         resetPassword,
         refreshProfile,
+        switchSession,
       }}
     >
       {children}

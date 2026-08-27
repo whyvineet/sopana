@@ -11,7 +11,7 @@ const LINKS = [
 ]
 
 export default function Navbar() {
-  const { isAuthenticated, logout, user } = useAuth()
+  const { isAuthenticated, logout, user, profile, switchSession } = useAuth()
   const dispatch = useAppDispatch()
   const appState = useAppState()
   const navigate = useNavigate()
@@ -21,6 +21,8 @@ export default function Navbar() {
     if (!newSessionId || newSessionId === appState.sessionId) return
 
     try {
+      await switchSession(newSessionId)
+      
       const response = await api.getConversation(newSessionId)
       dispatch({
         type: 'HYDRATE',
@@ -40,14 +42,13 @@ export default function Navbar() {
           conversationComplete: response.done,
         },
       })
-      if (user) {
-         await saveApplicationState(user.uid, { ...appState, sessionId: newSessionId }, { session_id: newSessionId })
-      }
       navigate('/dashboard')
     } catch (err) {
       console.error('Failed to switch session', err)
     }
   }
+
+  const learningPaths = profile?.learning_paths || []
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-100 bg-paper/90 backdrop-blur-sm">
@@ -82,16 +83,16 @@ export default function Navbar() {
                 </li>
               ))}
             </ul>
-            {appState.sessionHistory && appState.sessionHistory.length > 0 && (
+            {learningPaths.length > 0 && (
               <select
                 value={appState.sessionId || ''}
                 onChange={handleSessionSwitch}
                 className="ml-2 rounded-md border-gray-300 py-1 pl-3 pr-8 text-sm focus:border-gray-900 focus:ring-gray-900"
               >
                 <option value="" disabled>Select Journey</option>
-                {appState.sessionHistory.map((s) => (
-                  <option key={s.sessionId} value={s.sessionId}>
-                    {s.title || 'Learning Path'} ({new Date(s.timestamp).toLocaleDateString()})
+                {learningPaths.map((p) => (
+                  <option key={p.session_id} value={p.session_id}>
+                    {p.target_role || 'Learning Path'} ({new Date(p.updated_at || p.created_at).toLocaleDateString()})
                   </option>
                 ))}
               </select>
@@ -99,24 +100,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={async () => {
-                const currentSessionId = appState.sessionId;
-                let currentHistory = appState.sessionHistory || [];
-                
-                if (currentSessionId && !currentHistory.find(s => s.sessionId === currentSessionId)) {
-                   currentHistory = [
-                     ...currentHistory,
-                     {
-                       sessionId: currentSessionId,
-                       title: appState.learnerProfile?.target || 'Learning Path',
-                       timestamp: Date.now()
-                     }
-                   ];
-                }
-                
-                dispatch({ type: 'RESET_JOURNEY', payload: { sessionHistory: currentHistory } })
-                if (user) {
-                  await saveApplicationState(user.uid, { ...appState, sessionHistory: currentHistory, sessionId: null }, { session_id: "" })
-                }
+                dispatch({ type: 'RESET_JOURNEY' })
                 navigate('/start-onboarding')
               }}
               className="ml-2 rounded-full border border-gray-200 px-3.5 py-1.5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"

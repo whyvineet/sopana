@@ -253,3 +253,14 @@ export async function completeOnboarding(_userId, data = {}) {
     body: JSON.stringify({ data }),
   })
 }
+
+/**
+ * Switch the active learning path session.
+ * @param {string} sessionId
+ */
+export async function switchActiveSession(sessionId) {
+  return authRequest('/api/v1/users/me/active-session', {
+    method: 'PUT',
+    body: JSON.stringify({ session_id: sessionId }),
+  })
+}

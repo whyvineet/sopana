@@ -24,6 +24,13 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class LearningPathSummary(BaseModel):
+    session_id: str
+    target_role: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
 class UserProfileResponse(BaseModel):
     id: str
     name: str
@@ -33,6 +40,8 @@ class UserProfileResponse(BaseModel):
     app_state: dict[str, Any] | None = None
     last_route: str = "/start-onboarding"
     session_id: str | None = None
+    active_session_id: str | None = None
+    learning_paths: list[LearningPathSummary] = []
     created_at: str | None = None
     updated_at: str | None = None
 
@@ -78,3 +87,7 @@ class UpdateOnboardingStepRequest(BaseModel):
 
 class CompleteOnboardingRequest(BaseModel):
     data: dict[str, Any] = {}
+
+
+class UpdateActiveSessionRequest(BaseModel):
+    session_id: str
