@@ -25,7 +25,6 @@ dist-ssr
 
 # Environment variables
 .env
-.session.json
 
 # Python Related
 __pycache__
