@@ -2,9 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.knowledge.repository import level_rank
 from app.schemas.path import SkillGapItem, SkillGapResult
 from app.schemas.research import SkillRequirement
+
+LEVELS = ["none", "beginner", "basic", "intermediate", "advanced", "expert"]
+LEVEL_RANK = {level: i for i, level in enumerate(LEVELS)}
+
+
+def level_rank(level: str | None) -> int:
+    if not level:
+        return 0
+    return LEVEL_RANK.get(level.lower(), 0)
 
 
 def _level_name(level_int: int) -> str:
