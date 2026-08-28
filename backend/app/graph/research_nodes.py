@@ -9,6 +9,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import ValidationError
 
 from app.core.config import get_settings
+from app.prompts import render_template
 from app.graph.state import LearningState
 from app.integrations.llm.openrouter import get_chat_model
 from app.schemas.path import LearningStep
@@ -27,52 +28,66 @@ from app.services.web_search import get_web_search_service
 
 logger = logging.getLogger(__name__)
 
-
 def research_role_node(state: LearningState) -> dict:
     target_role = state.get("target_role")
-    if not target_role:
-        return {"error": "No target role specified for research."}
+    profile = state.get("learner_profile_json") or {}
 
-    logger.info("Starting research for role: %s", target_role)
+    specialization = profile.get("specialization") or state.get("specialization")
+    function = profile.get("function") or state.get("function")
+    industry = profile.get("industry") or state.get("industry")
+    career_intent = profile.get("career_intent") or state.get("career_intent")
+
+    if target_role:
+        rich_role = target_role
+    elif specialization and function:
+        rich_role = f"{specialization} ({function})"
+    elif specialization:
+        rich_role = specialization
+    elif function:
+        rich_role = function
+    else:
+        return {"error": "No target role or function specified for research."}
+
+    cache_key = f"{rich_role}|{industry or ''}"
+    logger.info("Starting research: role='%s' industry='%s'", rich_role, industry or "N/A")
+
     cache = get_research_cache()
-    cached = cache.get_role_research(target_role)
+    cached = cache.get_role_research(cache_key)
     if cached:
-        logger.info("Using cached research for role: %s", target_role)
+        logger.info("Using cached research for: %s", cache_key)
         return {"role_research": cached.model_dump()}
 
     search_svc = get_web_search_service()
-    
-    query = f"what does a {target_role} do required skills responsibilities"
+
+    query_parts = [rich_role]
+    if industry:
+        query_parts.append(f"in {industry}")
+    query = f"what does a {' '.join(query_parts)} do required skills responsibilities career path"
     results = search_svc.search(query)
-    
+
     context = "\n\n".join(
-        f"Source: {r.url}\nTitle: {r.title}\nContent: {r.content}" 
+        f"Source: {r.url}\nTitle: {r.title}\nContent: {r.content}"
         for r in results
     )
 
     llm = get_chat_model().with_structured_output(RoleResearch)
-    
-    prompt = f"""You are an expert career and learning path advisor.
-Analyze the following web search results about the role '{target_role}'.
-Extract the core skills, optional skills, tools, responsibilities, and specializations.
 
-Search Results:
-{context}
-"""
+    prompt = render_template(
+        "role_research.jinja",
+        rich_role=rich_role,
+        profile=profile,
+        search_context=context,
+    )
     try:
         research: RoleResearch = llm.invoke([SystemMessage(content=prompt)])
-        
-        research.role = target_role
+        research.role = rich_role
         from app.schemas.research import Source
         research.sources = [Source(title=r.title, url=r.url) for r in results]
-        
-        cache.set_role_research(target_role, research)
-        
+        cache.set_role_research(cache_key, research)
         return {"role_research": research.model_dump()}
     except Exception as exc:
         logger.error("Role research extraction failed: %s", exc)
-        return {"error": f"Failed to extract research for {target_role}"}
-
+        return {"error": f"Failed to extract research for {rich_role}"}
 
 def extract_skills_node(state: LearningState) -> dict:
     research_raw = state.get("role_research")
@@ -100,7 +115,6 @@ Role Research:
         logger.error("Skill extraction failed: %s", exc)
         return {"error": "Failed to extract skill requirements"}
 
-
 def compute_gap_node(state: LearningState) -> dict:
     requirements_raw = state.get("skill_requirements") or []
     target_role = state.get("target_role") or "Target Role"
@@ -113,7 +127,6 @@ def compute_gap_node(state: LearningState) -> dict:
     except Exception as exc:
         logger.error("Compute gap failed: %s", exc)
         return {"error": "Failed to compute skill gap"}
-
 
 def generate_candidate_path_node(state: LearningState) -> dict:
     gap_raw = state.get("skill_gap")
@@ -137,7 +150,6 @@ Skill Gap:
     except Exception as exc:
         logger.error("Candidate path generation failed: %s", exc)
         return {"error": "Failed to generate candidate path"}
-
 
 def research_resources_node(state: LearningState) -> dict:
     candidate_raw = state.get("candidate_path")
@@ -181,19 +193,18 @@ Search Results:
             all_resources.append(
                 LearningResource(
                     title=f"Fundamentals of {step.skill}",
-                    url=f"https://google.com/search?q=learn+{step.skill.replace(' ', '+')}",
-                    provider="Web Search",
-                    type="course",
+                    url=None,
+                    provider="Pending Resources",
+                    type="other",
                     skills=[step.skill],
                     difficulty="beginner",
                     estimated_duration=step.estimated_duration,
-                    reason=step.reason,
+                    reason=f"No verified resources found yet. {step.reason}",
                     is_verified=False
                 )
             )
 
     return {"researched_resources": [r.model_dump() for r in all_resources]}
-
 
 def finalize_path_node(state: LearningState) -> dict:
     try:
