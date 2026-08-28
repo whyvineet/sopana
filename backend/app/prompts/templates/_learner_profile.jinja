@@ -1,0 +1,16 @@
+{% macro format_profile(profile) -%}
+{% if profile %}
+{% if profile.target_role %}Target role already confirmed: {{ profile.target_role }}{% endif %}
+{% if profile.goal %}Goal already confirmed: {{ profile.goal }}{% endif %}
+{% if profile.industry %}Industry already confirmed: {{ profile.industry }}{% endif %}
+{% if profile.function %}Function already confirmed: {{ profile.function }}{% endif %}
+{% if profile.specialization %}Specialization already confirmed: {{ profile.specialization }}{% endif %}
+{% if profile.career_intent %}Career intent already confirmed: {{ profile.career_intent }}{% endif %}
+{% if profile.experience_level %}Experience level already confirmed: {{ profile.experience_level }}{% endif %}
+{% if profile.skills %}Skills already confirmed: {{ profile.skills | join(', ') }}{% endif %}
+{% if profile.interests %}Interests already confirmed: {{ profile.interests | join(', ') }}{% endif %}
+{% if profile.learning_objectives %}Objectives already confirmed: {{ profile.learning_objectives | join(', ') }}{% endif %}
+{% else %}
+Nothing confirmed yet.
+{% endif %}
+{%- endmacro %}

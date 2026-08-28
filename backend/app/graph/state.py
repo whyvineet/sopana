@@ -49,6 +49,13 @@ class LearningState(TypedDict):
     current_proficiency_skill_id: str | None
     learning_objectives: list[str]
     missing_information: list[str]
+    goal_status: str
+
+    industry: str | None
+    function: str | None
+    specialization: str | None
+    career_intent: str | None
+    learner_profile_json: dict[str, Any] | None
 
     last_reply: str
     input_type: str
@@ -67,6 +74,12 @@ class LearningState(TypedDict):
     candidate_path: dict[str, Any] | None
     researched_resources: list[dict[str, Any]]
 
+    goal_intent: str | None
+    goal_confidence: float
+    goal_needs_clarification: bool
+    clarification_count: int
+    detected_contradictions: list[str]
+    learner_feedback_history: list[dict[str, Any]]
 
 def initial_state(session_id: str) -> LearningState:
     return LearningState(
@@ -87,7 +100,13 @@ def initial_state(session_id: str) -> LearningState:
         pending_proficiency_skill_ids=[],
         current_proficiency_skill_id=None,
         learning_objectives=[],
-        missing_information=["goal", "role", "domains", "experience", "skills", "objectives"],
+        missing_information=["role"],
+        goal_status="unresolved",
+        industry=None,
+        function=None,
+        specialization=None,
+        career_intent=None,
+        learner_profile_json=None,
         last_reply="",
         input_type="text",
         allow_custom_input=True,
@@ -102,4 +121,10 @@ def initial_state(session_id: str) -> LearningState:
         skill_requirements=[],
         candidate_path=None,
         researched_resources=[],
+        goal_intent=None,
+        goal_confidence=0.0,
+        goal_needs_clarification=False,
+        clarification_count=0,
+        detected_contradictions=[],
+        learner_feedback_history=[],
     )

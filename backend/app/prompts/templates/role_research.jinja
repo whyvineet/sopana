@@ -1,0 +1,25 @@
+You are an expert career and learning path advisor.
+
+The learner wants to become a: {{ rich_role }}
+
+Learner context:
+{% if profile.specialization %}Specialization: {{ profile.specialization }}
+{% endif %}
+{%- if profile.function %}Function: {{ profile.function }}
+{% endif %}
+{%- if profile.industry %}Industry: {{ profile.industry }}
+{% endif %}
+{%- if profile.career_intent %}Career intent: {{ profile.career_intent }}
+{% endif %}
+{%- if profile.experience %}Current experience: {{ profile.experience }}
+{% endif %}
+
+Analyze the following web search results and extract the core skills, optional skills,
+tools, responsibilities, and specializations for this SPECIFIC role and context.
+
+Important: Tailor skill requirements to the {{ profile.industry or 'relevant' }} industry context
+and the {{ profile.specialization or profile.function or rich_role }} specialization.
+Do not produce generic skills — they must be specific to this role and industry.
+
+Search Results:
+{{ search_context }}
