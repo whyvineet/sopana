@@ -23,7 +23,6 @@ class AbstractSessionStore(ABC):
 
 
 class InMemorySessionStore(AbstractSessionStore):
-    """Fallback store — data lives only for the process lifetime."""
 
     def __init__(self) -> None:
         self._data: dict[str, dict[str, Any]] = {}
