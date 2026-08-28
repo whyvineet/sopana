@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.schemas.research import RoleResearch, SkillRequirement
-
+from app.schemas.research import SkillRequirement
 
 @dataclass
 class OptionItem:
@@ -21,16 +20,6 @@ def _slugify(label: str) -> str:
         .replace(",", " ")
     )
     return "_".join(cleaned.split())
-
-
-def domain_options(research: RoleResearch | None = None) -> list[OptionItem]:
-    domains = research.specializations if research and research.specializations else [
-        "Web Development",
-        "Data Science",
-        "Systems Engineering",
-        "Cloud Architecture",
-    ]
-    return [OptionItem(id=f"domain.{_slugify(name)}", label=name) for name in domains]
 
 
 def experience_options() -> list[OptionItem]:
