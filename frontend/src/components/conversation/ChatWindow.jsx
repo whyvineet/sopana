@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import MessageBubble from './MessageBubble'
 import TypingIndicator from './TypingIndicator'
 import OptionSelector from './OptionSelector'
+import SkillProficiencySelector from './SkillProficiencySelector'
 import ChatInput from './ChatInput'
 import ProgressIndicator from './ProgressIndicator'
 import ErrorPanel from '@/components/shared/ErrorPanel'
@@ -47,13 +48,22 @@ export default function ChatWindow({ messages, stage, isLoading, error, onSend, 
         )}
 
         {awaitingInput && lastMessage.inputType !== 'text' && lastMessage.inputType !== 'complete' && (
-          <OptionSelector
-            key={lastMessage.id}
-            options={lastMessage.options || []}
-            inputType={lastMessage.inputType}
-            disabled={isLoading}
-            onSubmit={onSend}
-          />
+          lastMessage.inputType === 'skill_proficiency' ? (
+            <SkillProficiencySelector
+              key={lastMessage.id}
+              skills={lastMessage.options || []}
+              disabled={isLoading}
+              onSubmit={onSend}
+            />
+          ) : (
+            <OptionSelector
+              key={lastMessage.id}
+              options={lastMessage.options || []}
+              inputType={lastMessage.inputType}
+              disabled={isLoading}
+              onSubmit={onSend}
+            />
+          )
         )}
       </div>
 

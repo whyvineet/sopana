@@ -152,7 +152,15 @@ def _upsert_skill(skills: list[dict[str, Any]], skill_name: str, level: str | No
     skill_id = f"dynamic.{skill_name.lower().replace(' ', '_')}"
     for index, item in enumerate(skills):
         if item.get("skill_id") == skill_id or item.get("name") == skill_name:
-            next_level = level or item.get("level") or "pending"
+            current_level = item.get("level")
+            
+            if source == "nlp_inference":
+                next_level = current_level if current_level else (level or "pending")
+            elif source == "selection":
+                next_level = level if level else (current_level or "pending")
+            else:
+                next_level = level or current_level or "pending"
+                
             skills[index] = {
                 "skill_id": skill_id,
                 "name": skill_name,
@@ -160,6 +168,7 @@ def _upsert_skill(skills: list[dict[str, Any]], skill_name: str, level: str | No
                 "source": source,
             }
             return
+            
     skills.append(
         {
             "skill_id": skill_id,
@@ -277,15 +286,21 @@ def _apply_option_text(state: LearningState, text: str) -> dict[str, Any]:
             updates["selected_skill_ids"] = [item["skill_id"] for item in skill_payload]
 
     if stage == "skill_proficiency" and text:
+        import json
         skill_payload = list(state.get("skills", []))
-        pending_skill = next((s for s in skill_payload if s.get("level") == "pending"), None)
-        if pending_skill:
-            if "::" in text:
-                level = text.split("::")[-1].lower()
-            else:
-                level = text.strip().lower()
-            _upsert_skill(skill_payload, pending_skill["name"], level, "selection")
+        try:
+            parsed_ratings = json.loads(text)
+            if isinstance(parsed_ratings, list):
+                for rating in parsed_ratings:
+                    skill_id = rating.get("skill_id")
+                    level = rating.get("level")
+                    if skill_id and level:
+                        for s in skill_payload:
+                            if s.get("skill_id") == skill_id:
+                                s["level"] = level.lower()
             updates["skills"] = skill_payload
+        except Exception:
+            logger.warning("Failed to parse skill proficiency ratings: %s", text)
 
     if stage == "learning_interests" and text:
         normalized_text = text.lower().strip()
@@ -386,17 +401,15 @@ def _prompt(state: LearningState) -> dict[str, Any]:
         }
 
     if "skill_proficiency" in missing:
-        from app.services.option_service import proficiency_options
-        
-        pending_skill = next((s for s in state.get("skills", []) if s.get("level") == "pending"), None)
-        if pending_skill:
+        pending_skills = [s for s in state.get("skills", []) if s.get("level") == "pending"]
+        if pending_skills:
             current, total = _progress("skill_proficiency")
             return {
                 "current_stage": "skill_proficiency",
-                "last_reply": f"How would you rate your proficiency in {pending_skill['name']}?",
-                "input_type": "single_select",
+                "last_reply": "How would you rate your proficiency in these skills?",
+                "input_type": "skill_proficiency",
                 "allow_custom_input": False,
-                "options": to_api_options(proficiency_options(pending_skill["skill_id"])),
+                "options": [{"id": s["skill_id"], "label": s["name"]} for s in pending_skills],
                 "progress_current": current,
                 "progress_total": total,
                 "missing_information": missing,

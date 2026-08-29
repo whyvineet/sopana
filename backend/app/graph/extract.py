@@ -82,7 +82,10 @@ def extract_from_history(
 
 def build_learner_profile_json(state: dict[str, Any]) -> dict[str, Any]:
     skills = state.get("skills") or []
-    skill_names = [s.get("name") for s in skills if isinstance(s, dict) and s.get("name")]
+    structured_skills = [
+        {"name": s.get("name"), "level": s.get("level")} 
+        for s in skills if isinstance(s, dict) and s.get("name")
+    ]
 
     return {
         "goal": state.get("goal") or state.get("goal_summary"),
@@ -92,7 +95,7 @@ def build_learner_profile_json(state: dict[str, Any]) -> dict[str, Any]:
         "specialization": state.get("specialization"),
         "career_intent": state.get("career_intent"),
         "experience": state.get("experience_level"),
-        "skills": skill_names,
+        "skills": structured_skills,
         "interests": state.get("interests") or [],
         "learning_objectives": state.get("learning_objectives") or [],
     }

@@ -74,17 +74,17 @@ function JourneyRestorer({ children }) {
 
 function App() {
   const location = useLocation()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, loading } = useAuth()
   const appState = useAppState()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isAssistantOpen, setIsAssistantOpen] = useState(false)
 
   useEffect(() => {
     const routes = ['/journey', '/path', '/dashboard', '/progress', '/ai-assistant']
-    if (user && appState.sessionId && routes.includes(location.pathname)) {
+    if (!loading && user && appState.sessionId && routes.includes(location.pathname)) {
       saveApplicationState(user.uid, appState, { lastRoute: location.pathname }).catch(() => {})
     }
-  }, [appState, location.pathname, user])
+  }, [appState, location.pathname, user, loading])
 
   const showSidebar = isAuthenticated && !['/', '/login'].includes(location.pathname)
 
