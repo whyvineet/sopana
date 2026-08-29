@@ -96,11 +96,11 @@ export function useConversation() {
             const index = res.stage?.index ?? 0
             await updateOnboardingStep(user.uid, ONBOARDING_STEPS[Math.min(index, ONBOARDING_STEPS.length - 1)])
           }
-          await saveApplicationState(user.uid, nextState, { lastRoute: res.done ? '/journey' : '/ai-assistant' })
+          await saveApplicationState(user.uid, nextState, { lastRoute: res.done ? '/path' : '/ai-assistant' })
         }
 
         if (res.done) {
-          navigate('/journey')
+          navigate('/path')
         }
       } catch (err) {
         setFailedPayload({ text, optionIds, displayText })
