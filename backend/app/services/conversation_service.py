@@ -89,7 +89,7 @@ def _build_dashboard(state: LearningState) -> dict[str, Any] | None:
     ][:4]
 
     return {
-        "target": state.get("target_role") or learning_path.get("role_name") or "Your role",
+        "target": state.get("goal") or state.get("target_role") or learning_path.get("goal_name") or learning_path.get("role_name") or "Your goal",
         "percent_complete": int(round(float(learning_path.get("overall_progress") or 0) * 100)),
         "current_focus": current_step.get("title") if isinstance(current_step, dict) else "Start your first step",
         "next_action": next_step.get("title") if isinstance(next_step, dict) else "Continue current focus",

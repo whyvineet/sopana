@@ -1,11 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import logging
 import time
 from typing import Any
 
-from app.schemas.research import RoleResearch
+from app.schemas.research import GoalResearch
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class ResearchCache:
     def _key(self, role: str) -> str:
         return f"{_KEY_PREFIX}{_normalize_role_key(role)}"
 
-    def get_role_research(self, role: str) -> RoleResearch | None:
+    def get_role_research(self, role: str) -> GoalResearch | None:
         store = self._store()
         raw: dict[str, Any] | None = store.get_raw(self._key(role))
         if raw is None:
@@ -37,12 +37,12 @@ class ResearchCache:
             logger.debug("Research cache expired for role: %s", role)
             return None
         try:
-            return RoleResearch.model_validate(raw["data"])
+            return GoalResearch.model_validate(raw["data"])
         except Exception as exc:
             logger.warning("Research cache deserialize error: %s", exc)
             return None
 
-    def set_role_research(self, role: str, research: RoleResearch) -> None:
+    def set_role_research(self, role: str, research: GoalResearch) -> None:
         store = self._store()
         store.set_raw(
             self._key(role),

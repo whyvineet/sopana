@@ -42,7 +42,7 @@ def _learner_levels(learner_skills: list[dict[str, Any]]) -> dict[str, str]:
 
 
 def compute_dynamic_skill_gap(
-    role_name: str,
+    goal_name: str,
     requirements: list[SkillRequirement],
     learner_skills: list[dict[str, Any]],
 ) -> SkillGapResult:
@@ -76,15 +76,15 @@ def compute_dynamic_skill_gap(
 
     total = len(strong) + len(developing) + len(missing)
     explanation = (
-        f"You're already strong in {len(strong)} of {total} skills needed for {role_name}. "
+        f"You're already strong in {len(strong)} of {total} skills/concepts needed for {goal_name}. "
         f"{len(developing)} are developing, and {len(missing)} are still missing."
         if total
-        else f"No required skills were found for {role_name}."
+        else f"No required skills/concepts were found for {goal_name}."
     )
     
     return SkillGapResult(
-        role_id=f"dynamic.{role_name.lower().replace(' ', '_')}",
-        role_name=role_name,
+        goal_id=f"dynamic.{goal_name.lower().replace(' ', '_')}",
+        goal_name=goal_name,
         strong=strong,
         developing=developing,
         missing=missing,

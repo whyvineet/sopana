@@ -26,6 +26,7 @@ STAGE_ORDER: list[StageName] = [
     "goal",
     "experience",
     "skill_discovery",
+    "skill_proficiency",
     "learning_interests",
     "objectives",
 ]
@@ -50,35 +51,38 @@ EXPERIENCE_ALIASES = {
     "total beginner": "none",
     "no_hands_on_experience": "none",
             
-    "casual": "casual",
-    "coursework": "casual",
-    "tutorials": "casual",
-    "self_taught": "casual",
-    "self-taught": "casual",
-    "hobby": "casual",
-    "beginner": "casual",
+    "casual": "beginner",
+    "coursework": "beginner",
+    "tutorials": "beginner",
+    "self_taught": "beginner",
+    "self-taught": "beginner",
+    "hobby": "beginner",
+    "beginner": "beginner",
               
-    "beginner_projects": "project",
-    "beginner__projects": "project",
-    "workshop": "workshop",
-    "workshops": "workshop",
-    "bootcamp": "workshop",
+    "beginner_projects": "intermediate",
+    "beginner__projects": "intermediate",
+    "workshop": "intermediate",
+    "workshops": "intermediate",
+    "bootcamp": "intermediate",
              
-    "project": "project",
-    "projects": "project",
-    "academic_projects": "project",
-    "academic__projects": "project",
-    "built_a_few_projects": "project",
-    "side projects": "project",
-    "personal projects": "project",
+    "project": "intermediate",
+    "projects": "intermediate",
+    "academic_projects": "intermediate",
+    "academic__projects": "intermediate",
+    "built_a_few_projects": "intermediate",
+    "side projects": "intermediate",
+    "personal projects": "intermediate",
+    "intermediate": "intermediate",
                   
-    "professional": "professional",
-    "professional_experience": "professional",
-    "professional__experience": "professional",
-    "work experience": "professional",
-    "job experience": "professional",
-    "industry": "professional",
-    "employed": "professional",
+    "professional": "advanced",
+    "professional_experience": "advanced",
+    "professional__experience": "advanced",
+    "work experience": "advanced",
+    "job experience": "advanced",
+    "industry": "advanced",
+    "employed": "advanced",
+    "expert": "advanced",
+    "advanced": "advanced",
 }
 
 def _last_user_text(state: LearningState) -> str:
@@ -90,14 +94,17 @@ def _last_user_text(state: LearningState) -> str:
 def _missing(state: LearningState) -> list[str]:
                                                                           
     goal_status = state.get("goal_status", "unresolved")
+    goal_type = state.get("goal_type", "unresolved")
     if goal_status != "confirmed":
-        return ["role"]
+        return ["role"] if goal_type == "career" else ["goal"]
 
     missing: list[str] = []
     if not state.get("experience_level"):
         missing.append("experience")
     if not state.get("selected_skill_ids") and state.get("experience_level") != "none":
         missing.append("skills")
+    elif any(s.get("level") == "pending" for s in state.get("skills", [])):
+        missing.append("skill_proficiency")
     if not state.get("specific_interest"):
         missing.append("interests")
     if not state.get("learning_objectives"):
@@ -145,7 +152,7 @@ def _upsert_skill(skills: list[dict[str, Any]], skill_name: str, level: str | No
     skill_id = f"dynamic.{skill_name.lower().replace(' ', '_')}"
     for index, item in enumerate(skills):
         if item.get("skill_id") == skill_id or item.get("name") == skill_name:
-            next_level = level or item.get("level") or "beginner"
+            next_level = level or item.get("level") or "pending"
             skills[index] = {
                 "skill_id": skill_id,
                 "name": skill_name,
@@ -157,7 +164,7 @@ def _upsert_skill(skills: list[dict[str, Any]], skill_name: str, level: str | No
         {
             "skill_id": skill_id,
             "name": skill_name,
-            "level": level or "beginner",
+            "level": level or "pending",
             "source": source,
         }
     )
@@ -177,6 +184,7 @@ def _apply_history_extraction(state: LearningState, allow_role_update: bool = Fa
         "skills": state.get("skills", []),
         "interests": state.get("interests", []),
         "learning_objectives": state.get("learning_objectives", []),
+        "goal_type": state.get("goal_type"),
     }
 
     parsed = extract_from_history(messages, current_profile)
@@ -185,6 +193,9 @@ def _apply_history_extraction(state: LearningState, allow_role_update: bool = Fa
     if parsed.goal_summary and not state.get("goal"):
         updates["goal"] = parsed.goal_summary
         updates["goal_summary"] = parsed.goal_summary
+
+    if parsed.goal_type and parsed.goal_type != "unresolved" and state.get("goal_type") in ("unresolved", None):
+        updates["goal_type"] = parsed.goal_type
 
     if allow_role_update:
                                                                                  
@@ -265,6 +276,17 @@ def _apply_option_text(state: LearningState, text: str) -> dict[str, Any]:
             updates["skills"] = skill_payload
             updates["selected_skill_ids"] = [item["skill_id"] for item in skill_payload]
 
+    if stage == "skill_proficiency" and text:
+        skill_payload = list(state.get("skills", []))
+        pending_skill = next((s for s in skill_payload if s.get("level") == "pending"), None)
+        if pending_skill:
+            if "::" in text:
+                level = text.split("::")[-1].lower()
+            else:
+                level = text.strip().lower()
+            _upsert_skill(skill_payload, pending_skill["name"], level, "selection")
+            updates["skills"] = skill_payload
+
     if stage == "learning_interests" and text:
         normalized_text = text.lower().strip()
         if normalized_text not in {"none", "no", "nope", "nil", "nothing", "n/a"}:
@@ -321,11 +343,11 @@ def _profile_summary(state: LearningState) -> str:
 def _prompt(state: LearningState) -> dict[str, Any]:
     missing = _missing(state)
 
-    if "role" in missing:
+    if "goal" in missing or "role" in missing:
         current, total = _progress("goal")
         return {
             "current_stage": "goal",
-            "last_reply": "What do you want to learn or become? (e.g. 'I want to become an AI engineer in healthcare')",
+            "last_reply": "What would you like to learn or achieve?",
             "input_type": "text",
             "allow_custom_input": True,
             "options": [],
@@ -362,6 +384,24 @@ def _prompt(state: LearningState) -> dict[str, Any]:
             "missing_information": missing,
             "error": None,
         }
+
+    if "skill_proficiency" in missing:
+        from app.services.option_service import proficiency_options
+        
+        pending_skill = next((s for s in state.get("skills", []) if s.get("level") == "pending"), None)
+        if pending_skill:
+            current, total = _progress("skill_proficiency")
+            return {
+                "current_stage": "skill_proficiency",
+                "last_reply": f"How would you rate your proficiency in {pending_skill['name']}?",
+                "input_type": "single_select",
+                "allow_custom_input": False,
+                "options": to_api_options(proficiency_options(pending_skill["skill_id"])),
+                "progress_current": current,
+                "progress_total": total,
+                "missing_information": missing,
+                "error": None,
+            }
 
     if "interests" in missing:
         current, total = _progress("learning_interests")
@@ -441,13 +481,13 @@ def _conversation_node_impl(state: LearningState) -> dict[str, Any]:
         current, total = _progress("goal")
         return {
             "current_stage": "goal",
-            "last_reply": "What would you like to learn or become?",
+            "last_reply": "What would you like to learn or achieve?",
             "input_type": "text",
             "allow_custom_input": True,
             "options": [],
             "progress_current": current,
             "progress_total": total,
-            "missing_information": ["role"],
+            "missing_information": ["goal"],
             "error": None,
         }
 
@@ -490,6 +530,7 @@ def _conversation_node_impl(state: LearningState) -> dict[str, Any]:
                     "goal_confidence": intent.confidence,
                     "goal_needs_clarification": False,
                     "clarification_count": clarification_count,
+                    "goal_type": intent.goal_type,
                 }
                 if intent.extracted_role:
                     goal_updates["target_role"] = intent.extracted_role
@@ -521,11 +562,12 @@ def _conversation_node_impl(state: LearningState) -> dict[str, Any]:
                     "options": [],
                     "progress_current": current,
                     "progress_total": total,
-                    "missing_information": ["role"],
+                    "missing_information": ["role"] if intent.goal_type == "career" else ["goal"],
                     "clarification_count": clarification_count + 1,
                     "goal_intent": intent.intent,
                     "goal_confidence": intent.confidence,
                     "goal_needs_clarification": True,
+                    "goal_type": intent.goal_type,
                     "error": None,
                 }
 
@@ -545,6 +587,7 @@ def _conversation_node_impl(state: LearningState) -> dict[str, Any]:
             "goal_intent": intent.intent,
             "goal_confidence": intent.confidence,
             "goal_needs_clarification": False,
+            "goal_type": intent.goal_type,
         }
 
         merged = _merged(after_options, extraction_updates, contradiction_update, intent_updates)

@@ -1,8 +1,10 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from app.schemas.path import ProjectRef
 
 
 class Source(BaseModel):
@@ -12,15 +14,13 @@ class Source(BaseModel):
     snippet: str | None = None
 
 
-class RoleResearch(BaseModel):
-    role: str = ""
+class GoalResearch(BaseModel):
+    goal: str = ""
     description: str = ""
-    core_skills: list[str] = Field(default_factory=list)
-    optional_skills: list[str] = Field(default_factory=list)
-    tools: list[str] = Field(default_factory=list)
-    responsibilities: list[str] = Field(default_factory=list)
-    specializations: list[str] = Field(default_factory=list)
-    typical_experience_years: str | None = None
+    core_topics: list[str] = Field(default_factory=list)
+    optional_topics: list[str] = Field(default_factory=list)
+    tools_and_methods: list[str] = Field(default_factory=list)
+    practical_applications: list[str] = Field(default_factory=list)
     sources: list[Source] = Field(default_factory=list)
     searched_at: str | None = None
 
@@ -66,6 +66,7 @@ class CandidatePathStep(BaseModel):
     expected_outcome: str | None = None
     estimated_duration: str = "~2 weeks"
     explanation: str | None = None
+    project: ProjectRef | None = None
 
 
 class CandidatePath(BaseModel):

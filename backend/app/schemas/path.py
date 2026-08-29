@@ -12,8 +12,8 @@ class SkillGapItem(BaseModel):
 
 
 class SkillGapResult(BaseModel):
-    role_id: str = ""
-    role_name: str = ""
+    goal_id: str = ""
+    goal_name: str = ""
     strong: list[SkillGapItem] = Field(default_factory=list)
     developing: list[SkillGapItem] = Field(default_factory=list)
     missing: list[SkillGapItem] = Field(default_factory=list)
@@ -60,8 +60,8 @@ class LearningStep(BaseModel):
 
 
 class LearningPath(BaseModel):
-    role_id: str = ""
-    role_name: str
+    goal_id: str = ""
+    goal_name: str
     steps: list[LearningStep]
     overall_progress: float
     current_focus_step_id: str | None = None

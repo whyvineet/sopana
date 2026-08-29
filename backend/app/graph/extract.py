@@ -32,7 +32,8 @@ def extract_learner_details(text: str) -> LearnerExtraction:
         "Compose target_role from function + specialization (e.g. 'Brand Marketing Strategist', not 'Marketing Professional'). "
         "Map 'nothing', 'nil', 'none', 'no experience' to experience_level='none'. "
         "Set role_confidence to 'low' when goal is broad and 'high' when function+specialization+career_intent are all known. "
-        "NEVER set target_role to greetings, casual phrases, or non-career text."
+        "NEVER set target_role to greetings, casual phrases, or non-career text. "
+        "Classify goal_type as 'career', 'academic', 'skill', 'hobby', or 'unresolved'. For non-career goals, you may omit target_role."
     )
     return llm.invoke([SystemMessage(content=prompt), HumanMessage(content=text)])
 

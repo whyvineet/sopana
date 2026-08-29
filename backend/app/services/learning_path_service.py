@@ -64,6 +64,7 @@ def build_dynamic_learning_path(
                 milestone=step.milestone,
                 expected_outcome=step.expected_outcome,
                 explanation=step.explanation,
+                project=step.project,
             )
         )
 
@@ -72,8 +73,8 @@ def build_dynamic_learning_path(
     overall_progress = round(completed_steps / total_steps, 2) if total_steps else 0.0
 
     return LearningPath(
-        role_id=gap.role_id,
-        role_name=gap.role_name,
+        goal_id=gap.goal_id,
+        goal_name=gap.goal_name,
         steps=steps,
         overall_progress=overall_progress,
         current_focus_step_id=steps[0].id if steps else None,

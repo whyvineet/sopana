@@ -14,13 +14,13 @@ def _build_path_context(stored: dict[str, Any], context_step_id: str | None) -> 
     learning_path = stored.get("learning_path") or {}
     steps = learning_path.get("steps") or []
     overall_progress = learning_path.get("overall_progress") or 0
-    role_name = learning_path.get("role_name") or stored.get("target_role") or "your goal"
+    goal_name = learning_path.get("goal_name") or learning_path.get("role_name") or stored.get("goal") or stored.get("target_role") or "your goal"
 
     context_parts: list[str] = []
 
     completed_count = sum(1 for s in steps if isinstance(s, dict) and s.get("completed"))
     context_parts.append(
-        f"The learner is working toward: {role_name}\n"
+        f"The learner is working toward: {goal_name}\n"
         f"Overall progress: {int(round(float(overall_progress) * 100))}% "
         f"({completed_count}/{len(steps)} steps completed)"
     )
@@ -141,7 +141,7 @@ Your role is to:
 
 ## Guidelines:
 - Always reference the learner's ACTUAL goal, skills, and path — do not make generic statements
-- If asked "Why am I learning X?", connect it directly to their {target_role} goal
+- If asked "Why am I learning X?", connect it directly to their {goal}
 - If asked "Can I skip this?", check their existing skills — if they have the skill, acknowledge it
 - If the learner is struggling, suggest foundational resources and be encouraging
 - Keep responses concise but substantive (2-4 paragraphs maximum)
@@ -157,12 +157,12 @@ def handle_chat(session_id: str, message: str, context_step_id: str | None = Non
 
     learner_profile = _build_learner_profile_context(stored)
     path_context = _build_path_context(stored, context_step_id)
-    target_role = stored.get("target_role") or "your target role"
+    goal = stored.get("goal") or stored.get("target_role") or "your goal"
 
     system_prompt = _ASSISTANT_SYSTEM_PROMPT_TEMPLATE.format(
         learner_profile=learner_profile,
         path_context=path_context,
-        target_role=target_role,
+        goal=goal,
     )
 
     try:

@@ -73,6 +73,17 @@ role_confidence:
   'medium' → function and career_intent known, but specialization unclear
   'low'    → only broad domain or industry known
 
+goal_type:
+  Classify the user's primary goal type. MUST be one of:
+  - "career": User wants to get a job or build a professional career in this field (e.g. "become a cybersecurity engineer", "chartered accountant").
+  - "academic": User is studying for school, university, or an exam (e.g. "learn linear algebra for an exam", "study for AP History").
+  - "skill": User wants to acquire a specific practical skill (e.g. "learn Photoshop", "learn Python").
+  - "hobby": User is learning strictly for fun, personal interest, or casual enjoyment (e.g. "learn photography for fun").
+  - "unresolved": The goal type is completely unclear.
+
+NOTE ON target_role:
+  Only career goals strictly require a target_role. For academic, skill, or hobby goals, you may leave target_role null or adapt it loosely if appropriate, but do not force a non-career goal into a career role title.
+
 experience_level:
   Map from any mention in the conversation:
   "nothing", "nil", "none", "no experience", "never", "beginner", "just starting" → "none"

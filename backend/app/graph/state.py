@@ -4,6 +4,8 @@ from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph.message import add_messages
 
+from app.schemas.common import GoalType
+
 StageName = Literal[
     "goal",
     "domain_discovery",
@@ -36,6 +38,7 @@ class LearningState(TypedDict):
     profile_complete: bool
 
     goal: str | None
+    goal_type: GoalType
     goal_summary: str | None
     target_role: str | None
     selected_domains: list[str]
@@ -69,7 +72,7 @@ class LearningState(TypedDict):
     error: str | None
 
     research_status: Literal["idle", "in_progress", "complete", "failed"]
-    role_research: dict[str, Any] | None
+    goal_research: dict[str, Any] | None
     skill_requirements: list[dict[str, Any]]
     candidate_path: dict[str, Any] | None
     researched_resources: list[dict[str, Any]]
@@ -88,6 +91,7 @@ def initial_state(session_id: str) -> LearningState:
         current_stage="goal",
         profile_complete=False,
         goal=None,
+        goal_type="unresolved",
         goal_summary=None,
         target_role=None,
         selected_domains=[],
@@ -100,7 +104,7 @@ def initial_state(session_id: str) -> LearningState:
         pending_proficiency_skill_ids=[],
         current_proficiency_skill_id=None,
         learning_objectives=[],
-        missing_information=["role"],
+        missing_information=["goal"],
         goal_status="unresolved",
         industry=None,
         function=None,
@@ -117,7 +121,7 @@ def initial_state(session_id: str) -> LearningState:
         learning_path=None,
         error=None,
         research_status="idle",
-        role_research=None,
+        goal_research=None,
         skill_requirements=[],
         candidate_path=None,
         researched_resources=[],

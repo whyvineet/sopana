@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.common import GoalType
+
 Proficiency = Literal["beginner", "basic", "intermediate", "advanced", "expert"]
 ExperienceLevel = Literal["none", "casual", "workshop", "project", "professional"]
 
@@ -23,6 +25,7 @@ IntentType = Literal[
 
 class IntentAnalysis(BaseModel):
     intent: IntentType = "off_topic"
+    goal_type: GoalType = "unresolved"
     goal: str | None = None
     is_valid_goal: bool = False
     needs_clarification: bool = True
@@ -38,6 +41,7 @@ class SkillEvidence(BaseModel):
 
 class LearnerExtraction(BaseModel):
     goal_summary: str | None = None
+    goal_type: GoalType = "unresolved"
 
     target_role: str | None = None
     role_confidence: Literal["low", "medium", "high"] = "low"

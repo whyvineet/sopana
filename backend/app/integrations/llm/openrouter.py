@@ -24,7 +24,6 @@ def get_chat_model() -> ChatOpenAI:
         api_key=settings.openrouter_api_key,
         base_url="https://openrouter.ai/api/v1",
         temperature=0.2,
-        max_tokens=1024,
         default_headers={
             "HTTP-Referer": settings.openrouter_http_referer,
             "X-Title": app_title,

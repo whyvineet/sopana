@@ -109,17 +109,7 @@ def _get_remedial_resources(step: dict[str, Any]) -> list[dict[str, Any]]:
     if beginner_resources:
         return beginner_resources[:2]
 
-    skills = step.get("skills") or []
-    return [
-        {
-            "title": f"Beginner guide to {skill}",
-            "url": f"https://google.com/search?q=beginner+guide+{skill.replace(' ', '+')}",
-            "type": "search",
-            "difficulty": "beginner",
-            "reason": f"Foundational resource for {skill}",
-        }
-        for skill in skills[:2]
-    ]
+    return []
 
 def process_feedback(session_id: str, step_id: str, feedback: FeedbackPayload) -> dict[str, Any]:
     store = get_session_store()
