@@ -15,16 +15,18 @@ export default function Conversation() {
   }
 
   return (
-    <ChatWindow
-      messages={messages}
-      stage={stage}
-      isLoading={isLoading}
-      error={error}
-      onSend={handleSend}
-      onRetry={() => {
-        clearError()
-        retryLast()
-      }}
-    />
+    <div className="flex h-[calc(100vh-64px)] flex-col">
+      <ChatWindow
+        messages={messages}
+        stage={stage}
+        isLoading={isLoading}
+        error={error}
+        onSend={handleSend}
+        onRetry={() => {
+          clearError()
+          retryLast()
+        }}
+      />
+    </div>
   )
 }
