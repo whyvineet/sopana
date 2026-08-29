@@ -173,8 +173,13 @@ def generate_candidate_path_node(state: LearningState) -> dict:
         "goal_type": state.get("goal_type", "unresolved")
     }
     
+    previous_error = state.get("error")
+    error_prompt = ""
+    if previous_error and previous_error.startswith("Path validation failed:"):
+        error_prompt = f"\n\nCRITICAL FEEDBACK FROM PREVIOUS ATTEMPT:\nThe previous path was rejected for the following reason:\n{previous_error}\n\nYou MUST fix this issue. Ensure the path strictly teaches the required topic without hallucinating unrelated topics (e.g. do not teach programming/software if the goal is purely mathematical, unless explicitly requested in interests)."
+    
     prompt = f"""You are an expert learning path creator.
-Design a highly personalized learning path to address the missing and developing skills/concepts in this gap.
+Design a highly personalized learning path to address the missing and developing skills/concepts in this gap.{error_prompt}
 
 Learner Profile & Preferences:
 {json.dumps(preferences, indent=2)}
@@ -190,7 +195,7 @@ Skill Gap:
 """
     try:
         candidate: CandidatePath = llm.invoke([SystemMessage(content=prompt)])
-        return {"candidate_path": candidate.model_dump()}
+        return {"candidate_path": candidate.model_dump(), "error": None}
     except Exception as exc:
         logger.error("Candidate path generation failed: %s", exc)
         return {"error": "Failed to generate candidate path"}
