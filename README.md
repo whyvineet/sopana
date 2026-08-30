@@ -1,151 +1,82 @@
 # SOPĀNA
 
-**Personalized Learning, One Step at a Time.**
+SOPĀNA is a conversational AI learning advisor that builds personalized learning paths based on a learner's goals.
 
-## Tech Stack
+## Prerequisites
 
-### Frontend
-
-* React.js
-* Vite
-* JavaScript
-* Tailwind CSS
-
-### Backend
-
-* Python 3.11
-* FastAPI
-* `uv`
+- **Python**: 3.11 or higher
+- **uv**: Latest version (fast Python package installer)
+- **Node.js**: v18 or higher
+- **npm**: v9 or higher
 
 ---
 
-## Project Structure
+## Setup & Installation
 
-```text
-.
-├── frontend/
-└── backend/
-```
+The project is split into a Python FastAPI backend and a React Vite frontend. You will need to run both concurrently in separate terminal windows.
 
-The frontend and backend are maintained as separate applications within the repository.
+### 1. Backend Setup
 
----
-
-## Frontend Setup
-
-Navigate to the frontend directory:
-
-```bash
-cd frontend
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-The frontend is built using React, Vite, and Tailwind CSS.
-
----
-
-## Backend Setup
-
-Navigate to the backend directory:
+The backend handles all AI orchestration and API routes.
 
 ```bash
 cd backend
+cp .env.example .env
 ```
 
-Synchronize the Python environment and dependencies:
+**Configure Environment Variables:**
+Open `backend/.env` and add your OpenRouter API key. This is the only strictly required key to run the application locally (it will use in-memory storage).
 
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
+**Install and Run:**
 ```bash
+# Install dependencies
 uv sync
-```
 
-Start the FastAPI development server:
-
-```bash
+# Start the FastAPI development server
 uv run fastapi dev
 ```
+The backend API will be available at: `http://localhost:8000`
 
-FastAPI will start the development server using the application's configured entry point.
+### 2. Frontend Setup
 
----
+The frontend is a React application built with Vite.
 
-## Environment Variables
+```bash
+cd frontend
+cp .env.example .env
+```
 
-The frontend uses an environment variable to determine the FastAPI backend URL.
-
-Create a `.env` file inside the `frontend/` directory:
+**Configure Environment Variables:**
+Open `frontend/.env` and ensure it points to your local backend:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-This variable is used by the frontend when communicating with the backend.
-
-### Important
-
-Do not commit `.env` files to Git if they contain secrets or environment-specific configuration.
-
-Keep only non-sensitive configuration values in `.env.example`.
-
----
-
-## Frontend–Backend Connectivity
-
-The frontend currently performs a basic connectivity check against the FastAPI backend.
-
-The backend exposes:
-
-```http
-GET /api/v1/health
-```
-
-The frontend uses:
-
-```text
-VITE_API_BASE_URL
-```
-
-to construct the request URL.
-
-Expected response:
-
-```json
-{
-  "status": "ok",
-  "service": "SOPĀNA API"
-}
-```
-
-This verifies that the React frontend can successfully communicate with the FastAPI backend.
-
----
-
-## Running Both Applications
-
-Run the backend in one terminal:
-
+**Install and Run:**
 ```bash
-cd backend
-uv run fastapi dev
-```
+# Install dependencies
+npm install
 
-Run the frontend in another terminal:
-
-```bash
-cd frontend
+# Start the Vite development server
 npm run dev
 ```
+The frontend UI will be available at: `http://localhost:5173`
 
-Once both servers are running, open the frontend URL provided by Vite.
+---
 
-The SOPĀNA interface should indicate whether the backend is connected successfully.
+## Optional: Supabase Configuration
+
+By default, SOPĀNA runs entirely in-memory. Sessions will be lost when the backend restarts, and user authentication will be disabled. 
+
+To enable session persistence and authentication, configure a Supabase project and add the following to `backend/.env`:
+
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SECRET_KEY=your_supabase_service_role_key
+SUPABASE_JWKS_URL=your_supabase_jwks_url
+```
